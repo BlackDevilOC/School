@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'routes.dart';
+import '../services/auth_service.dart';
+import '../routes.dart';
 
 class LoginScreen extends StatelessWidget {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
-  final String validUsername = 'Ibadullah';
-  final String validPassword = 'ibad1234';
+  final AuthService _authService = AuthService();
 
   LoginScreen({super.key});
 
@@ -14,12 +13,12 @@ class LoginScreen extends StatelessWidget {
     final username = usernameController.text.trim();
     final password = passwordController.text;
 
-    if (username == validUsername && password == validPassword) {
+    if (_authService.login(username, password)) {
       Navigator.pushReplacementNamed(context, Routes.home);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid username or password')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Invalid username or password')));
     }
   }
 
@@ -27,7 +26,7 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Dawn Essential Academy Rohri',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
@@ -44,35 +43,34 @@ class LoginScreen extends StatelessWidget {
                 'assets/logo.png', // Replace with your actual logo path
                 height: 100,
               ),
-              const SizedBox(height: 32),
-              SizedBox(
+              SizedBox(height: 32),
+              Container(
                 width: 300, // Make input fields smaller
                 child: Column(
                   children: [
                     TextField(
                       controller: usernameController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Username',
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16),
                     TextField(
                       controller: passwordController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Password',
                         border: OutlineInputBorder(),
                       ),
                       obscureText: true,
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () => _login(context),
+                      child: Text('Login'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        minimumSize: const Size(double.infinity, 50),
+                        minimumSize: Size(double.infinity, 50),
                       ),
-                      child: const Text('Login'),
                     ),
                   ],
                 ),

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'routes.dart';
+import '../routes.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home Screen'),
+        title: Text('Home Screen'),
         centerTitle: true,
         backgroundColor: Colors.green,
       ),
@@ -25,7 +23,7 @@ class HomeScreen extends StatelessWidget {
                   Navigator.pushNamed(context, Routes.studentRecord);
                 },
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               CustomBox(
                 label: 'Teacher Record',
                 icon: Icons.person,
@@ -47,7 +45,6 @@ class CustomBox extends StatelessWidget {
   final VoidCallback onTap;
 
   const CustomBox({
-    super.key,
     required this.label,
     required this.icon,
     required this.onTap,
@@ -62,17 +59,14 @@ class CustomBox extends StatelessWidget {
         elevation: 4,
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+          padding: EdgeInsets.symmetric(vertical: 30, horizontal: 20),
           child: Column(
             children: [
               Icon(icon, size: 40, color: Colors.green),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
             ],
           ),
