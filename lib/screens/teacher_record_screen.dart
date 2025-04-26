@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../routes.dart';
+import 'monthly_report_screen.dart';
 
 class TeacherRecordScreen extends StatelessWidget {
   const TeacherRecordScreen({super.key});
@@ -165,22 +166,11 @@ class TeacherRecordScreen extends StatelessWidget {
   }
 
   void _showMonthlyReports(BuildContext context) {
-    // Show a dialog for monthly reports
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Monthly Reports'),
-            content: const Text(
-              'This will show monthly report options for teachers',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const MonthlyReportScreen(isTeacher: true),
+      ),
     );
   }
 }

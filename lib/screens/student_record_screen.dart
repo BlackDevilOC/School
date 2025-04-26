@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../routes.dart';
+import 'monthly_report_screen.dart';
 
 class StudentRecordScreen extends StatelessWidget {
   const StudentRecordScreen({super.key});
@@ -163,44 +164,11 @@ class StudentRecordScreen extends StatelessWidget {
   }
 
   void _showMonthlyReports(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text('Monthly Attendance Reports'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  title: Text('January 2023'),
-                  trailing: Icon(Icons.download),
-                  onTap: () {
-                    // Download or view January report
-                  },
-                ),
-                ListTile(
-                  title: Text('February 2023'),
-                  trailing: Icon(Icons.download),
-                  onTap: () {
-                    // Download or view February report
-                  },
-                ),
-                ListTile(
-                  title: Text('March 2023'),
-                  trailing: Icon(Icons.download),
-                  onTap: () {
-                    // Download or view March report
-                  },
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Close'),
-              ),
-            ],
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const MonthlyReportScreen(isTeacher: false),
+      ),
     );
   }
 }
