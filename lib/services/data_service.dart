@@ -2,6 +2,7 @@
 // between different screens in the application
 
 import '../models/fee_structure.dart';
+import '../models/payment_record.dart';
 
 class DataService {
   // Singleton pattern
@@ -179,6 +180,10 @@ class DataService {
     ),
   ];
 
+  // Payment records
+  final List<FeePaymentRecord> _feePayments = [];
+  final List<SalaryPaymentRecord> _salaryPayments = [];
+
   // Get all students
   List<Map<String, dynamic>> get students => _students;
 
@@ -190,6 +195,12 @@ class DataService {
 
   // Get all salary structures
   List<SalaryStructure> get salaryStructures => _salaryStructures;
+
+  // Get all fee payments
+  List<FeePaymentRecord> get feePayments => _feePayments;
+
+  // Get all salary payments
+  List<SalaryPaymentRecord> get salaryPayments => _salaryPayments;
 
   // Get fee structure by class
   FeeStructure? getFeeStructureByClass(String className) {
@@ -313,5 +324,94 @@ class DataService {
   // Delete salary structure
   void deleteSalaryStructure(String id) {
     _salaryStructures.removeWhere((salary) => salary.id == id);
+  }
+
+  // Get fee payments by student ID
+  List<FeePaymentRecord> getFeePaymentsByStudent(String studentId) {
+    return _feePayments
+        .where((payment) => payment.studentId == studentId)
+        .toList();
+  }
+
+  // Get fee payments by class
+  List<FeePaymentRecord> getFeePaymentsByClass(String className) {
+    return _feePayments
+        .where((payment) => payment.className == className)
+        .toList();
+  }
+
+  // Get fee payments by month and year
+  List<FeePaymentRecord> getFeePaymentsByMonth(String month, int year) {
+    return _feePayments
+        .where((payment) => payment.month == month && payment.year == year)
+        .toList();
+  }
+
+  // Get salary payments by teacher ID
+  List<SalaryPaymentRecord> getSalaryPaymentsByTeacher(String teacherId) {
+    return _salaryPayments
+        .where((payment) => payment.teacherId == teacherId)
+        .toList();
+  }
+
+  // Get salary payments by month and year
+  List<SalaryPaymentRecord> getSalaryPaymentsByMonth(String month, int year) {
+    return _salaryPayments
+        .where((payment) => payment.month == month && payment.year == year)
+        .toList();
+  }
+
+  // Add new fee payment
+  void addFeePayment(FeePaymentRecord payment) {
+    _feePayments.add(payment);
+  }
+
+  // Add new salary payment
+  void addSalaryPayment(SalaryPaymentRecord payment) {
+    _salaryPayments.add(payment);
+  }
+
+  // Update fee payment
+  void updateFeePayment(String id, FeePaymentRecord updatedPayment) {
+    final index = _feePayments.indexWhere((payment) => payment.id == id);
+    if (index != -1) {
+      _feePayments[index] = updatedPayment;
+    }
+  }
+
+  // Update salary payment
+  void updateSalaryPayment(String id, SalaryPaymentRecord updatedPayment) {
+    final index = _salaryPayments.indexWhere((payment) => payment.id == id);
+    if (index != -1) {
+      _salaryPayments[index] = updatedPayment;
+    }
+  }
+
+  // Delete fee payment
+  void deleteFeePayment(String id) {
+    _feePayments.removeWhere((payment) => payment.id == id);
+  }
+
+  // Delete salary payment
+  void deleteSalaryPayment(String id) {
+    _salaryPayments.removeWhere((payment) => payment.id == id);
+  }
+
+  // Get pending fee payments by student
+  List<FeePaymentRecord> getPendingFeePayments(String studentId) {
+    return _feePayments
+        .where(
+          (payment) => payment.studentId == studentId && !payment.isFullyPaid,
+        )
+        .toList();
+  }
+
+  // Get pending salary payments by teacher
+  List<SalaryPaymentRecord> getPendingSalaryPayments(String teacherId) {
+    return _salaryPayments
+        .where(
+          (payment) => payment.teacherId == teacherId && !payment.isFullyPaid,
+        )
+        .toList();
   }
 }

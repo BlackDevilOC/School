@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/fee_structure.dart';
 import '../services/data_service.dart';
+import 'payment_management_screen.dart';
 
 class FeeStructureScreen extends StatefulWidget {
   final bool isTeacher;
@@ -21,6 +22,25 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
       appBar: AppBar(
         title: Text(widget.isTeacher ? 'Salary Structure' : 'Fee Structure'),
         backgroundColor: Colors.green,
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) =>
+                          PaymentManagementScreen(isTeacher: widget.isTeacher),
+                ),
+              );
+            },
+            icon: const Icon(Icons.payment, color: Colors.white),
+            label: Text(
+              widget.isTeacher ? 'Manage Salaries' : 'Manage Fees',
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
