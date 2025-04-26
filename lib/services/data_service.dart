@@ -1,6 +1,8 @@
 // This service handles data management and synchronization
 // between different screens in the application
 
+import '../models/fee_structure.dart';
+
 class DataService {
   // Singleton pattern
   static final DataService _instance = DataService._internal();
@@ -16,6 +18,7 @@ class DataService {
     {
       'id': '1',
       'name': 'Alice Brown',
+      'fatherName': 'John Brown',
       'classGrade': '10th',
       'rollNumber': 101,
       'phoneNumber': '555-111-2222',
@@ -24,6 +27,7 @@ class DataService {
     {
       'id': '2',
       'name': 'Bob Johnson',
+      'fatherName': 'Mike Johnson',
       'classGrade': '9th',
       'rollNumber': 102,
       'phoneNumber': '555-333-4444',
@@ -32,6 +36,7 @@ class DataService {
     {
       'id': '3',
       'name': 'Charlie Davis',
+      'fatherName': 'William Davis',
       'classGrade': '11th',
       'rollNumber': 103,
       'phoneNumber': '555-555-6666',
@@ -40,6 +45,7 @@ class DataService {
     {
       'id': '4',
       'name': 'Diana Smith',
+      'fatherName': 'Robert Smith',
       'classGrade': '10th',
       'rollNumber': 104,
       'phoneNumber': '555-777-8888',
@@ -48,6 +54,7 @@ class DataService {
     {
       'id': '5',
       'name': 'Edward Wilson',
+      'fatherName': 'James Wilson',
       'classGrade': '9th',
       'rollNumber': 105,
       'phoneNumber': '555-999-0000',
@@ -94,11 +101,115 @@ class DataService {
     },
   ];
 
+  // Fee structures for different classes
+  final List<FeeStructure> _feeStructures = [
+    FeeStructure(
+      id: '1',
+      className: '9th',
+      monthlyFee: 5000.0,
+      admissionFee: 10000.0,
+      examFee: 2000.0,
+      libraryFee: 500.0,
+      transportFee: 1000.0,
+      otherFees: {'Computer Lab': 500.0, 'Sports': 300.0},
+    ),
+    FeeStructure(
+      id: '2',
+      className: '10th',
+      monthlyFee: 5500.0,
+      admissionFee: 10000.0,
+      examFee: 2000.0,
+      libraryFee: 500.0,
+      transportFee: 1000.0,
+      otherFees: {'Computer Lab': 500.0, 'Sports': 300.0},
+    ),
+    FeeStructure(
+      id: '3',
+      className: '11th',
+      monthlyFee: 6000.0,
+      admissionFee: 12000.0,
+      examFee: 2500.0,
+      libraryFee: 600.0,
+      transportFee: 1000.0,
+      otherFees: {'Computer Lab': 700.0, 'Sports': 300.0},
+    ),
+    FeeStructure(
+      id: '4',
+      className: '12th',
+      monthlyFee: 6500.0,
+      admissionFee: 12000.0,
+      examFee: 2500.0,
+      libraryFee: 600.0,
+      transportFee: 1000.0,
+      otherFees: {'Computer Lab': 700.0, 'Sports': 300.0},
+    ),
+  ];
+
+  // Salary structures for different designations
+  final List<SalaryStructure> _salaryStructures = [
+    SalaryStructure(
+      id: '1',
+      designation: 'Junior Teacher',
+      basicSalary: 30000.0,
+      houseRent: 5000.0,
+      medicalAllowance: 2000.0,
+      transportAllowance: 1500.0,
+      otherAllowances: {'Performance': 2000.0},
+      deductions: {'Tax': 1500.0, 'Insurance': 1000.0},
+    ),
+    SalaryStructure(
+      id: '2',
+      designation: 'Senior Teacher',
+      basicSalary: 45000.0,
+      houseRent: 7000.0,
+      medicalAllowance: 3000.0,
+      transportAllowance: 2000.0,
+      otherAllowances: {'Performance': 3000.0},
+      deductions: {'Tax': 2250.0, 'Insurance': 1500.0},
+    ),
+    SalaryStructure(
+      id: '3',
+      designation: 'Head of Department',
+      basicSalary: 60000.0,
+      houseRent: 10000.0,
+      medicalAllowance: 4000.0,
+      transportAllowance: 2500.0,
+      otherAllowances: {'Performance': 5000.0, 'Position': 3000.0},
+      deductions: {'Tax': 3000.0, 'Insurance': 2000.0},
+    ),
+  ];
+
   // Get all students
   List<Map<String, dynamic>> get students => _students;
 
   // Get all teachers
   List<Map<String, dynamic>> get teachers => _teachers;
+
+  // Get all fee structures
+  List<FeeStructure> get feeStructures => _feeStructures;
+
+  // Get all salary structures
+  List<SalaryStructure> get salaryStructures => _salaryStructures;
+
+  // Get fee structure by class
+  FeeStructure? getFeeStructureByClass(String className) {
+    try {
+      return _feeStructures.firstWhere((fee) => fee.className == className);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Get salary structure by designation
+  SalaryStructure? getSalaryStructureByDesignation(String designation) {
+    try {
+      return _salaryStructures.firstWhere(
+        (salary) => salary.designation == designation,
+      );
+    } catch (e) {
+      return null;
+    }
+  }
 
   // Add a new student
   void addStudent(Map<String, dynamic> student) {
@@ -166,5 +277,41 @@ class DataService {
     if (index != -1) {
       _teachers[index]['isPresent'] = isPresent;
     }
+  }
+
+  // Update fee structure
+  void updateFeeStructure(String id, FeeStructure updatedFee) {
+    final index = _feeStructures.indexWhere((fee) => fee.id == id);
+    if (index != -1) {
+      _feeStructures[index] = updatedFee;
+    }
+  }
+
+  // Update salary structure
+  void updateSalaryStructure(String id, SalaryStructure updatedSalary) {
+    final index = _salaryStructures.indexWhere((salary) => salary.id == id);
+    if (index != -1) {
+      _salaryStructures[index] = updatedSalary;
+    }
+  }
+
+  // Add new fee structure
+  void addFeeStructure(FeeStructure feeStructure) {
+    _feeStructures.add(feeStructure);
+  }
+
+  // Add new salary structure
+  void addSalaryStructure(SalaryStructure salaryStructure) {
+    _salaryStructures.add(salaryStructure);
+  }
+
+  // Delete fee structure
+  void deleteFeeStructure(String id) {
+    _feeStructures.removeWhere((fee) => fee.id == id);
+  }
+
+  // Delete salary structure
+  void deleteSalaryStructure(String id) {
+    _salaryStructures.removeWhere((salary) => salary.id == id);
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'routes.dart';
-import 'screens/login_screen.dart';
 // import 'package:academy_portal/LoginScreen.dart'; // <-- Add this line
 
 void main() {
@@ -8,6 +7,8 @@ void main() {
 }
 
 class AcademyApp extends StatelessWidget {
+  const AcademyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
