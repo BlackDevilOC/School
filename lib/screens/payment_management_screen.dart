@@ -379,22 +379,33 @@ class _PaymentManagementScreenState extends State<PaymentManagementScreen> {
                 shrinkWrap: true,
                 itemCount: payments.length,
                 itemBuilder: (context, index) {
-                  final payment = payments[index];
-                  return ListTile(
-                    title: Text(
-                      '${payment.month} ${payment.year}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      isTeacher
-                          ? 'Paid: ₹${(payment as SalaryPaymentRecord).paidAmount}'
-                          : 'Paid: ₹${(payment as FeePaymentRecord).paidAmount}',
-                    ),
-                    trailing: Text(
-                      _formatDate(payment.paymentDate),
-                      style: const TextStyle(color: Colors.black54),
-                    ),
-                  );
+                  if (isTeacher) {
+                    final payment = payments[index] as SalaryPaymentRecord;
+                    return ListTile(
+                      title: Text(
+                        '${payment.month} ${payment.year}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text('Paid: ₹${payment.paidAmount}'),
+                      trailing: Text(
+                        _formatDate(payment.paymentDate),
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                    );
+                  } else {
+                    final payment = payments[index] as FeePaymentRecord;
+                    return ListTile(
+                      title: Text(
+                        '${payment.month} ${payment.year}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Text('Paid: ₹${payment.paidAmount}'),
+                      trailing: Text(
+                        _formatDate(payment.paymentDate),
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                    );
+                  }
                 },
               ),
             ),
