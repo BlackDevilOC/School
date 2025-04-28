@@ -94,12 +94,7 @@ class StudentRecordScreen extends StatelessWidget {
                       Colors.amber.shade50,
                       Colors.amber.shade700,
                       () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Fees Structure - Coming Soon'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                        Navigator.pushNamed(context, Routes.feeStructure);
                       },
                     ),
                     _buildActionCard(
