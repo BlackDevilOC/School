@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../routes.dart';
 
 class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,6 +47,7 @@ class CustomBox extends StatelessWidget {
   final VoidCallback onTap;
 
   const CustomBox({
+    super.key,
     required this.label,
     required this.icon,
     required this.onTap,

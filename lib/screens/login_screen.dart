@@ -44,7 +44,7 @@ class LoginScreen extends StatelessWidget {
                 height: 100,
               ),
               SizedBox(height: 32),
-              Container(
+              SizedBox(
                 width: 300, // Make input fields smaller
                 child: Column(
                   children: [
@@ -67,10 +67,10 @@ class LoginScreen extends StatelessWidget {
                     SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () => _login(context),
-                      child: Text('Login'),
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(double.infinity, 50),
                       ),
+                      child: Text('Login'),
                     ),
                   ],
                 ),

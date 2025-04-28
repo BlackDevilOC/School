@@ -151,17 +151,17 @@ class _ManageTeachersScreenState extends State<ManageTeachersScreen> {
                             Navigator.pop(context);
                             _resetForm();
                           },
-                          child: Text('Cancel'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey.shade500,
                           ),
+                          child: Text('Cancel'),
                         ),
                         ElevatedButton(
                           onPressed: _saveTeacher,
-                          child: Text(_isEditing ? 'Update' : 'Save'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                           ),
+                          child: Text(_isEditing ? 'Update' : 'Save'),
                         ),
                       ],
                     ),

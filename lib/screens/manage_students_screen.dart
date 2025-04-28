@@ -179,17 +179,17 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                             Navigator.pop(context);
                             _resetForm();
                           },
-                          child: Text('Cancel'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey.shade500,
                           ),
+                          child: Text('Cancel'),
                         ),
                         ElevatedButton(
                           onPressed: _saveStudent,
-                          child: Text(_isEditing ? 'Update' : 'Save'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
                           ),
+                          child: Text(_isEditing ? 'Update' : 'Save'),
                         ),
                       ],
                     ),
@@ -379,8 +379,8 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
               ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showForm(),
-        child: Icon(Icons.add),
         backgroundColor: Colors.green,
+        child: Icon(Icons.add),
       ),
     );
   }

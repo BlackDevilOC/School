@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../routes.dart';
 import 'monthly_report_screen.dart';
-import 'fee_structure_screen.dart';
 
 class StudentRecordScreen extends StatelessWidget {
   const StudentRecordScreen({super.key});
@@ -95,12 +94,10 @@ class StudentRecordScreen extends StatelessWidget {
                       Colors.amber.shade50,
                       Colors.amber.shade700,
                       () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) =>
-                                    const FeeStructureScreen(isTeacher: false),
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Fees Structure - Coming Soon'),
+                            behavior: SnackBarBehavior.floating,
                           ),
                         );
                       },
