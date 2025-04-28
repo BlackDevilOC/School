@@ -12,13 +12,60 @@ class StudentAttendanceScreen extends StatefulWidget {
 class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   final DataService _dataService = DataService();
   late List<Map<String, dynamic>> students;
+  late List<Map<String, dynamic>> filteredStudents;
 
   DateTime _selectedDate = DateTime.now();
+  bool _isClassStudent = true; // Default to class students
+  String _selectedClass = 'All';
+  String _selectedBatch = 'All';
+
+  // Get unique class grades
+  List<String> get _classGrades {
+    final grades =
+        students
+            .where((s) => s['isClassStudent'] == true)
+            .map((s) => s['classGrade'] as String)
+            .toSet()
+            .toList();
+    grades.sort();
+    return ['All', ...grades];
+  }
+
+  // Get unique batch numbers
+  List<String> get _batchNumbers {
+    final batches =
+        students
+            .where((s) => s['isClassStudent'] == false)
+            .map((s) => s['batchNumber'] as String)
+            .toSet()
+            .toList();
+    batches.sort();
+    return ['All', ...batches];
+  }
 
   @override
   void initState() {
     super.initState();
     students = _dataService.students;
+    _filterStudents();
+  }
+
+  void _filterStudents() {
+    setState(() {
+      filteredStudents =
+          students.where((student) {
+            final isCorrectType = student['isClassStudent'] == _isClassStudent;
+            if (!isCorrectType) return false;
+
+            if (_isClassStudent) {
+              return _selectedClass == 'All' ||
+                  student['classGrade'] == _selectedClass;
+            } else {
+              return _selectedBatch == 'All' ||
+                  student['batchNumber'] == _selectedBatch;
+            }
+          }).toList();
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -37,11 +84,12 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
 
   void _toggleAttendance(int index) {
     setState(() {
-      final String id = students[index]['id'];
-      final bool newValue = !students[index]['isPresent'];
+      final student = filteredStudents[index];
+      final String id = student['id'];
+      final bool newValue = !student['isPresent'];
 
       // Update the local state
-      students[index]['isPresent'] = newValue;
+      student['isPresent'] = newValue;
 
       // Update in the data service
       _dataService.updateStudentAttendance(id, newValue);
@@ -65,9 +113,106 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
       body: Column(
         children: [
           _buildDateSelector(),
+          _buildFilterOptions(),
           _buildAttendanceHeaderRow(),
           Expanded(child: _buildAttendanceList()),
           _buildSubmitButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterOptions() {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: RadioListTile<bool>(
+                  title: Text('Class Students'),
+                  value: true,
+                  groupValue: _isClassStudent,
+                  onChanged: (bool? value) {
+                    if (value != null) {
+                      setState(() {
+                        _isClassStudent = value;
+                        _selectedClass = 'All';
+                        _selectedBatch = 'All';
+                        _filterStudents();
+                      });
+                    }
+                  },
+                ),
+              ),
+              Expanded(
+                child: RadioListTile<bool>(
+                  title: Text('Course Students'),
+                  value: false,
+                  groupValue: _isClassStudent,
+                  onChanged: (bool? value) {
+                    if (value != null) {
+                      setState(() {
+                        _isClassStudent = value;
+                        _selectedClass = 'All';
+                        _selectedBatch = 'All';
+                        _filterStudents();
+                      });
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          if (_isClassStudent)
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Filter by Class',
+                border: OutlineInputBorder(),
+              ),
+              value: _selectedClass,
+              items:
+                  _classGrades
+                      .map(
+                        (grade) =>
+                            DropdownMenuItem(value: grade, child: Text(grade)),
+                      )
+                      .toList(),
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedClass = value;
+                    _filterStudents();
+                  });
+                }
+              },
+            )
+          else
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Filter by Batch',
+                border: OutlineInputBorder(),
+              ),
+              value: _selectedBatch,
+              items:
+                  _batchNumbers
+                      .map(
+                        (batch) =>
+                            DropdownMenuItem(value: batch, child: Text(batch)),
+                      )
+                      .toList(),
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedBatch = value;
+                    _filterStudents();
+                  });
+                }
+              },
+            ),
         ],
       ),
     );
@@ -98,7 +243,7 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       color: Colors.grey.shade200,
-      child: const Row(
+      child: Row(
         children: [
           Expanded(
             flex: 1,
@@ -112,8 +257,11 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
             child: Text('Name', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
           Expanded(
-            flex: 1,
-            child: Text('Class', style: TextStyle(fontWeight: FontWeight.bold)),
+            flex: 2,
+            child: Text(
+              _isClassStudent ? 'Class' : 'Course/Batch',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           Expanded(
             flex: 1,
@@ -130,9 +278,9 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
 
   Widget _buildAttendanceList() {
     return ListView.builder(
-      itemCount: students.length,
+      itemCount: filteredStudents.length,
       itemBuilder: (context, index) {
-        final student = students[index];
+        final student = filteredStudents[index];
         final bool isPresent = student['isPresent'] ?? false;
 
         return GestureDetector(
@@ -159,9 +307,11 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                     ),
                   ),
                   Expanded(
-                    flex: 1,
+                    flex: 2,
                     child: Text(
-                      '${student['classGrade']}',
+                      _isClassStudent
+                          ? '${student['classGrade']}'
+                          : '${student['courseName']}\n${student['batchNumber']}',
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                   ),

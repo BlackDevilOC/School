@@ -19,13 +19,43 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
 
   // Form controllers
   final TextEditingController _studentNameController = TextEditingController();
+  final TextEditingController _classGradeController = TextEditingController();
   final TextEditingController _courseNameController = TextEditingController();
+  final TextEditingController _batchNumberController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _dueDateController = TextEditingController();
   DateTime? _selectedDueDate;
 
+  bool _isClassStudent = true; // Default to class students
+  String _selectedClass = 'All';
+  String _selectedBatch = 'All';
+
   List<Fee> _fees = [];
   List<Fee> _filteredFees = [];
+
+  // Get unique class grades
+  List<String> get _classGrades {
+    final grades =
+        _fees
+            .where((f) => f.isClassStudent)
+            .map((f) => f.classGrade!)
+            .toSet()
+            .toList();
+    grades.sort();
+    return ['All', ...grades];
+  }
+
+  // Get unique batch numbers
+  List<String> get _batchNumbers {
+    final batches =
+        _fees
+            .where((f) => !f.isClassStudent)
+            .map((f) => f.batchNumber!)
+            .toSet()
+            .toList();
+    batches.sort();
+    return ['All', ...batches];
+  }
 
   @override
   void initState() {
@@ -37,7 +67,9 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
   void dispose() {
     _searchController.dispose();
     _studentNameController.dispose();
+    _classGradeController.dispose();
     _courseNameController.dispose();
+    _batchNumberController.dispose();
     _amountController.dispose();
     _dueDateController.dispose();
     super.dispose();
@@ -47,21 +79,45 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
     // In a real app, this would load from a database
     // For now, we'll use dummy data
     _fees = [
+      // Class Students
       Fee(
         id: '1',
         studentName: 'John Doe',
-        courseName: 'Mathematics',
+        classGrade: '10th',
         amount: 500.0,
         dueDate: DateTime.now().add(const Duration(days: 7)),
         isPaid: false,
+        isClassStudent: true,
       ),
       Fee(
         id: '2',
         studentName: 'Jane Smith',
-        courseName: 'Science',
-        amount: 600.0,
+        classGrade: '9th',
+        amount: 450.0,
         dueDate: DateTime.now().add(const Duration(days: 14)),
         isPaid: true,
+        isClassStudent: true,
+      ),
+      // Course Students
+      Fee(
+        id: '3',
+        studentName: 'Frank Miller',
+        courseName: 'Web Development',
+        batchNumber: 'WD-2024',
+        amount: 800.0,
+        dueDate: DateTime.now().add(const Duration(days: 10)),
+        isPaid: false,
+        isClassStudent: false,
+      ),
+      Fee(
+        id: '4',
+        studentName: 'Grace Taylor',
+        courseName: 'Mobile App Development',
+        batchNumber: 'MAD-2024',
+        amount: 900.0,
+        dueDate: DateTime.now().add(const Duration(days: 20)),
+        isPaid: true,
+        isClassStudent: false,
       ),
     ];
     _filterFees();
@@ -72,8 +128,28 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
     setState(() {
       _filteredFees =
           _fees.where((fee) {
+            // First filter by student type
+            if (fee.isClassStudent != _isClassStudent) return false;
+
+            // Then filter by class or batch
+            if (_isClassStudent) {
+              if (_selectedClass != 'All' && fee.classGrade != _selectedClass) {
+                return false;
+              }
+            } else {
+              if (_selectedBatch != 'All' &&
+                  fee.batchNumber != _selectedBatch) {
+                return false;
+              }
+            }
+
+            // Finally filter by search query
             return fee.studentName.toLowerCase().contains(searchQuery) ||
-                fee.courseName.toLowerCase().contains(searchQuery);
+                (_isClassStudent
+                    ? (fee.classGrade?.toLowerCase().contains(searchQuery) ??
+                        false)
+                    : (fee.courseName?.toLowerCase().contains(searchQuery) ??
+                        false));
           }).toList();
 
       if (_sortColumn != null) {
@@ -96,9 +172,17 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
             aValue = a.studentName;
             bValue = b.studentName;
             break;
-          case 'courseName':
-            aValue = a.courseName;
-            bValue = b.courseName;
+          case 'class':
+            aValue = a.classGrade ?? '';
+            bValue = b.classGrade ?? '';
+            break;
+          case 'course':
+            aValue = a.courseName ?? '';
+            bValue = b.courseName ?? '';
+            break;
+          case 'batch':
+            aValue = a.batchNumber ?? '';
+            bValue = b.batchNumber ?? '';
             break;
           case 'amount':
             aValue = a.amount;
@@ -152,198 +236,6 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
     }
   }
 
-  void _showAddEditFeeDialog([Fee? fee]) {
-    if (fee != null) {
-      _studentNameController.text = fee.studentName;
-      _courseNameController.text = fee.courseName;
-      _amountController.text = fee.amount.toString();
-      _selectedDueDate = fee.dueDate;
-      _dueDateController.text =
-          '${fee.dueDate.day}/${fee.dueDate.month}/${fee.dueDate.year}';
-    } else {
-      _studentNameController.clear();
-      _courseNameController.clear();
-      _amountController.clear();
-      _dueDateController.clear();
-      _selectedDueDate = null;
-    }
-
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text(fee == null ? 'Add Fee Record' : 'Edit Fee Record'),
-            content: SingleChildScrollView(
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: _studentNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Student Name',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator:
-                          (value) =>
-                              value?.isEmpty == true ? 'Required field' : null,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _courseNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Course/Program Name',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator:
-                          (value) =>
-                              value?.isEmpty == true ? 'Required field' : null,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _amountController,
-                      decoration: const InputDecoration(
-                        labelText: 'Fee Amount',
-                        border: OutlineInputBorder(),
-                        prefixText: '\$',
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value?.isEmpty == true) return 'Required field';
-                        if (double.tryParse(value!) == null) {
-                          return 'Please enter a valid amount';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _dueDateController,
-                      decoration: InputDecoration(
-                        labelText: 'Due Date',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.calendar_today),
-                          onPressed: () => _selectDate(context),
-                        ),
-                      ),
-                      readOnly: true,
-                      validator:
-                          (value) =>
-                              value?.isEmpty == true ? 'Required field' : null,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState?.validate() == true) {
-                    final newFee = Fee(
-                      id:
-                          fee?.id ??
-                          DateTime.now().millisecondsSinceEpoch.toString(),
-                      studentName: _studentNameController.text,
-                      courseName: _courseNameController.text,
-                      amount: double.parse(_amountController.text),
-                      dueDate: _selectedDueDate!,
-                      isPaid: fee?.isPaid ?? false,
-                    );
-
-                    setState(() {
-                      if (fee != null) {
-                        // Update existing fee
-                        final index = _fees.indexWhere((f) => f.id == fee.id);
-                        if (index != -1) {
-                          _fees[index] = newFee;
-                        }
-                      } else {
-                        // Add new fee
-                        _fees.add(newFee);
-                      }
-                      _filterFees();
-                    });
-
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          fee == null
-                              ? 'Fee record added successfully'
-                              : 'Fee record updated successfully',
-                        ),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
-                },
-                child: Text(fee == null ? 'Add' : 'Update'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  void _deleteFee(Fee fee) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete Fee Record'),
-            content: Text(
-              'Are you sure you want to delete the fee record for ${fee.studentName}?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _fees.removeWhere((f) => f.id == fee.id);
-                    _filterFees();
-                  });
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Fee record deleted successfully'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Delete'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  void _togglePaymentStatus(Fee fee) {
-    setState(() {
-      final index = _fees.indexWhere((f) => f.id == fee.id);
-      if (index != -1) {
-        final updatedFee = Fee(
-          id: fee.id,
-          studentName: fee.studentName,
-          courseName: fee.courseName,
-          amount: fee.amount,
-          dueDate: fee.dueDate,
-          isPaid: !fee.isPaid,
-        );
-        _fees[index] = updatedFee;
-        _filterFees();
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -371,130 +263,9 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
         ),
         body: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  labelText: 'Search',
-                  hintText: 'Search by student or course name',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onChanged: (value) => _filterFees(),
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SingleChildScrollView(
-                  child: DataTable(
-                    columns: [
-                      DataColumn(
-                        label: const Text('Student Name'),
-                        onSort:
-                            (_, ascending) =>
-                                _sortFees('studentName', ascending),
-                      ),
-                      DataColumn(
-                        label: const Text('Course Name'),
-                        onSort:
-                            (_, ascending) =>
-                                _sortFees('courseName', ascending),
-                      ),
-                      DataColumn(
-                        label: const Text('Amount'),
-                        numeric: true,
-                        onSort:
-                            (_, ascending) => _sortFees('amount', ascending),
-                      ),
-                      DataColumn(
-                        label: const Text('Due Date'),
-                        onSort:
-                            (_, ascending) => _sortFees('dueDate', ascending),
-                      ),
-                      DataColumn(
-                        label: const Text('Status'),
-                        onSort:
-                            (_, ascending) => _sortFees('status', ascending),
-                      ),
-                      const DataColumn(label: Text('Actions')),
-                    ],
-                    rows:
-                        _filteredFees.map((fee) {
-                          return DataRow(
-                            cells: [
-                              DataCell(Text(fee.studentName)),
-                              DataCell(Text(fee.courseName)),
-                              DataCell(
-                                Text('\$${fee.amount.toStringAsFixed(2)}'),
-                              ),
-                              DataCell(
-                                Text(
-                                  '${fee.dueDate.day}/${fee.dueDate.month}/${fee.dueDate.year}',
-                                ),
-                              ),
-                              DataCell(
-                                GestureDetector(
-                                  onTap: () => _togglePaymentStatus(fee),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          fee.isPaid
-                                              ? Colors.green.withOpacity(0.1)
-                                              : Colors.red.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      fee.isPaid ? 'Paid' : 'Pending',
-                                      style: TextStyle(
-                                        color:
-                                            fee.isPaid
-                                                ? Colors.green
-                                                : Colors.red,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              DataCell(
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.edit,
-                                        color: Colors.blue,
-                                      ),
-                                      onPressed:
-                                          () => _showAddEditFeeDialog(fee),
-                                      tooltip: 'Edit',
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
-                                      ),
-                                      onPressed: () => _deleteFee(fee),
-                                      tooltip: 'Delete',
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          );
-                        }).toList(),
-                  ),
-                ),
-              ),
-            ),
+            _buildFilterOptions(),
+            _buildSearchBar(),
+            Expanded(child: _buildFeeTable()),
           ],
         ),
         floatingActionButton: FloatingActionButton(
@@ -504,6 +275,463 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
           tooltip: 'Add new fee record',
         ),
       ),
+    );
+  }
+
+  Widget _buildFilterOptions() {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: RadioListTile<bool>(
+                  title: Text('Class Students'),
+                  value: true,
+                  groupValue: _isClassStudent,
+                  onChanged: (bool? value) {
+                    if (value != null) {
+                      setState(() {
+                        _isClassStudent = value;
+                        _selectedClass = 'All';
+                        _selectedBatch = 'All';
+                        _filterFees();
+                      });
+                    }
+                  },
+                ),
+              ),
+              Expanded(
+                child: RadioListTile<bool>(
+                  title: Text('Course Students'),
+                  value: false,
+                  groupValue: _isClassStudent,
+                  onChanged: (bool? value) {
+                    if (value != null) {
+                      setState(() {
+                        _isClassStudent = value;
+                        _selectedClass = 'All';
+                        _selectedBatch = 'All';
+                        _filterFees();
+                      });
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          if (_isClassStudent)
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Filter by Class',
+                border: OutlineInputBorder(),
+              ),
+              value: _selectedClass,
+              items:
+                  _classGrades
+                      .map(
+                        (grade) =>
+                            DropdownMenuItem(value: grade, child: Text(grade)),
+                      )
+                      .toList(),
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedClass = value;
+                    _filterFees();
+                  });
+                }
+              },
+            )
+          else
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Filter by Batch',
+                border: OutlineInputBorder(),
+              ),
+              value: _selectedBatch,
+              items:
+                  _batchNumbers
+                      .map(
+                        (batch) =>
+                            DropdownMenuItem(value: batch, child: Text(batch)),
+                      )
+                      .toList(),
+              onChanged: (String? value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedBatch = value;
+                    _filterFees();
+                  });
+                }
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          labelText: 'Search',
+          prefixIcon: const Icon(Icons.search),
+          border: const OutlineInputBorder(),
+        ),
+        onChanged: (_) => _filterFees(),
+      ),
+    );
+  }
+
+  Widget _buildFeeTable() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: DataTable(
+        columns: [
+          DataColumn(
+            label: const Text('Student Name'),
+            onSort:
+                (columnIndex, ascending) => _sortFees('studentName', ascending),
+          ),
+          if (_isClassStudent)
+            DataColumn(
+              label: const Text('Class'),
+              onSort: (columnIndex, ascending) => _sortFees('class', ascending),
+            )
+          else ...[
+            DataColumn(
+              label: const Text('Course'),
+              onSort:
+                  (columnIndex, ascending) => _sortFees('course', ascending),
+            ),
+            DataColumn(
+              label: const Text('Batch'),
+              onSort: (columnIndex, ascending) => _sortFees('batch', ascending),
+            ),
+          ],
+          DataColumn(
+            label: const Text('Amount'),
+            numeric: true,
+            onSort: (columnIndex, ascending) => _sortFees('amount', ascending),
+          ),
+          DataColumn(
+            label: const Text('Due Date'),
+            onSort: (columnIndex, ascending) => _sortFees('dueDate', ascending),
+          ),
+          DataColumn(
+            label: const Text('Status'),
+            onSort: (columnIndex, ascending) => _sortFees('status', ascending),
+          ),
+          const DataColumn(label: Text('Actions')),
+        ],
+        rows:
+            _filteredFees.map((fee) {
+              return DataRow(
+                cells: [
+                  DataCell(Text(fee.studentName)),
+                  if (_isClassStudent)
+                    DataCell(Text(fee.classGrade ?? ''))
+                  else ...[
+                    DataCell(Text(fee.courseName ?? '')),
+                    DataCell(Text(fee.batchNumber ?? '')),
+                  ],
+                  DataCell(Text('\$${fee.amount.toStringAsFixed(2)}')),
+                  DataCell(
+                    Text(
+                      '${fee.dueDate.day}/${fee.dueDate.month}/${fee.dueDate.year}',
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      fee.isPaid ? 'Paid' : 'Pending',
+                      style: TextStyle(
+                        color: fee.isPaid ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () => _showAddEditFeeDialog(fee),
+                          color: Colors.blue,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => _deleteFee(fee),
+                          color: Colors.red,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+      ),
+    );
+  }
+
+  void _showAddEditFeeDialog([Fee? fee]) {
+    if (fee != null) {
+      _studentNameController.text = fee.studentName;
+      if (fee.isClassStudent) {
+        _classGradeController.text = fee.classGrade ?? '';
+      } else {
+        _courseNameController.text = fee.courseName ?? '';
+        _batchNumberController.text = fee.batchNumber ?? '';
+      }
+      _amountController.text = fee.amount.toString();
+      _selectedDueDate = fee.dueDate;
+      _dueDateController.text =
+          '${fee.dueDate.day}/${fee.dueDate.month}/${fee.dueDate.year}';
+      _isClassStudent = fee.isClassStudent;
+    } else {
+      _studentNameController.clear();
+      _classGradeController.clear();
+      _courseNameController.clear();
+      _batchNumberController.clear();
+      _amountController.clear();
+      _dueDateController.clear();
+      _selectedDueDate = null;
+    }
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => StatefulBuilder(
+            builder: (BuildContext context, StateSetter setDialogState) {
+              return AlertDialog(
+                title: Text(fee == null ? 'Add Fee Record' : 'Edit Fee Record'),
+                content: SingleChildScrollView(
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: RadioListTile<bool>(
+                                title: Text('Class'),
+                                value: true,
+                                groupValue: _isClassStudent,
+                                onChanged: (bool? value) {
+                                  if (value != null) {
+                                    setDialogState(() {
+                                      _isClassStudent = value;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                            Expanded(
+                              child: RadioListTile<bool>(
+                                title: Text('Course'),
+                                value: false,
+                                groupValue: _isClassStudent,
+                                onChanged: (bool? value) {
+                                  if (value != null) {
+                                    setDialogState(() {
+                                      _isClassStudent = value;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          controller: _studentNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Student Name',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator:
+                              (value) =>
+                                  value?.isEmpty == true
+                                      ? 'Required field'
+                                      : null,
+                        ),
+                        SizedBox(height: 16),
+                        if (_isClassStudent)
+                          TextFormField(
+                            controller: _classGradeController,
+                            decoration: const InputDecoration(
+                              labelText: 'Class/Grade',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator:
+                                (value) =>
+                                    value?.isEmpty == true
+                                        ? 'Required field'
+                                        : null,
+                          )
+                        else ...[
+                          TextFormField(
+                            controller: _courseNameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Course Name',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator:
+                                (value) =>
+                                    value?.isEmpty == true
+                                        ? 'Required field'
+                                        : null,
+                          ),
+                          SizedBox(height: 16),
+                          TextFormField(
+                            controller: _batchNumberController,
+                            decoration: const InputDecoration(
+                              labelText: 'Batch Number',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator:
+                                (value) =>
+                                    value?.isEmpty == true
+                                        ? 'Required field'
+                                        : null,
+                          ),
+                        ],
+                        SizedBox(height: 16),
+                        TextFormField(
+                          controller: _amountController,
+                          decoration: const InputDecoration(
+                            labelText: 'Amount',
+                            border: OutlineInputBorder(),
+                            prefixText: '\$',
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value?.isEmpty == true) return 'Required field';
+                            if (double.tryParse(value!) == null)
+                              return 'Enter valid amount';
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          controller: _dueDateController,
+                          decoration: const InputDecoration(
+                            labelText: 'Due Date',
+                            border: OutlineInputBorder(),
+                          ),
+                          readOnly: true,
+                          onTap: () => _selectDate(context),
+                          validator:
+                              (value) =>
+                                  value?.isEmpty == true
+                                      ? 'Required field'
+                                      : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => _saveFee(fee),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    child: Text(fee == null ? 'Add' : 'Update'),
+                  ),
+                ],
+              );
+            },
+          ),
+    );
+  }
+
+  void _saveFee(Fee? existingFee) {
+    if (_formKey.currentState?.validate() == true && _selectedDueDate != null) {
+      final newFee = Fee(
+        id: existingFee?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        studentName: _studentNameController.text,
+        classGrade: _isClassStudent ? _classGradeController.text : null,
+        courseName: !_isClassStudent ? _courseNameController.text : null,
+        batchNumber: !_isClassStudent ? _batchNumberController.text : null,
+        amount: double.parse(_amountController.text),
+        dueDate: _selectedDueDate!,
+        isPaid: existingFee?.isPaid ?? false,
+        isClassStudent: _isClassStudent,
+      );
+
+      setState(() {
+        if (existingFee != null) {
+          final index = _fees.indexWhere((fee) => fee.id == existingFee.id);
+          if (index != -1) {
+            _fees[index] = newFee;
+          }
+        } else {
+          _fees.add(newFee);
+        }
+        _filterFees();
+      });
+
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            existingFee == null
+                ? 'Fee added successfully'
+                : 'Fee updated successfully',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
+  void _deleteFee(Fee fee) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Delete Fee Record'),
+            content: const Text(
+              'Are you sure you want to delete this fee record?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _fees.removeWhere((f) => f.id == fee.id);
+                    _filterFees();
+                  });
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Fee record deleted successfully'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                },
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
     );
   }
 }

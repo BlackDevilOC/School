@@ -1,8 +1,8 @@
 class AuthService {
   // Hardcoded credentials for demo purposes
   // In a real app, you'd use a secure authentication method
-  final String validUsername = 'Ibadullah';
-  final String validPassword = 'ibad1234';
+  final String validUsername = 'rehan';
+  final String validPassword = 'rehan';
 
   bool login(String username, String password) {
     return username == validUsername && password == validPassword;

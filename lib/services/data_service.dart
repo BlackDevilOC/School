@@ -13,6 +13,7 @@ class DataService {
 
   // Student data
   final List<Map<String, dynamic>> _students = [
+    // Class Students
     {
       'id': '1',
       'name': 'Alice Brown',
@@ -21,6 +22,7 @@ class DataService {
       'rollNumber': 101,
       'phoneNumber': '555-111-2222',
       'isPresent': true,
+      'isClassStudent': true,
     },
     {
       'id': '2',
@@ -30,6 +32,7 @@ class DataService {
       'rollNumber': 102,
       'phoneNumber': '555-333-4444',
       'isPresent': false,
+      'isClassStudent': true,
     },
     {
       'id': '3',
@@ -39,6 +42,7 @@ class DataService {
       'rollNumber': 103,
       'phoneNumber': '555-555-6666',
       'isPresent': true,
+      'isClassStudent': true,
     },
     {
       'id': '4',
@@ -48,6 +52,7 @@ class DataService {
       'rollNumber': 104,
       'phoneNumber': '555-777-8888',
       'isPresent': true,
+      'isClassStudent': true,
     },
     {
       'id': '5',
@@ -57,6 +62,63 @@ class DataService {
       'rollNumber': 105,
       'phoneNumber': '555-999-0000',
       'isPresent': false,
+      'isClassStudent': true,
+    },
+    // Course Students
+    {
+      'id': '6',
+      'name': 'Frank Miller',
+      'fatherName': 'George Miller',
+      'courseName': 'Web Development',
+      'batchNumber': 'WD-2024',
+      'rollNumber': 201,
+      'phoneNumber': '555-111-3333',
+      'isPresent': true,
+      'isClassStudent': false,
+    },
+    {
+      'id': '7',
+      'name': 'Grace Taylor',
+      'fatherName': 'Henry Taylor',
+      'courseName': 'Web Development',
+      'batchNumber': 'WD-2024',
+      'rollNumber': 202,
+      'phoneNumber': '555-222-4444',
+      'isPresent': true,
+      'isClassStudent': false,
+    },
+    {
+      'id': '8',
+      'name': 'Harry Anderson',
+      'fatherName': 'Ian Anderson',
+      'courseName': 'Mobile App Development',
+      'batchNumber': 'MAD-2024',
+      'rollNumber': 301,
+      'phoneNumber': '555-333-5555',
+      'isPresent': false,
+      'isClassStudent': false,
+    },
+    {
+      'id': '9',
+      'name': 'Ivy Clark',
+      'fatherName': 'Jack Clark',
+      'courseName': 'Mobile App Development',
+      'batchNumber': 'MAD-2024',
+      'rollNumber': 302,
+      'phoneNumber': '555-444-6666',
+      'isPresent': true,
+      'isClassStudent': false,
+    },
+    {
+      'id': '10',
+      'name': 'Julia Martin',
+      'fatherName': 'Kevin Martin',
+      'courseName': 'Data Science',
+      'batchNumber': 'DS-2024',
+      'rollNumber': 401,
+      'phoneNumber': '555-555-7777',
+      'isPresent': true,
+      'isClassStudent': false,
     },
   ];
 
