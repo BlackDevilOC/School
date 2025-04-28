@@ -69,16 +69,6 @@ class StudentRecordScreen extends StatelessWidget {
                     ),
                     _buildActionCard(
                       context,
-                      'Student Details',
-                      Icons.person_search_outlined,
-                      Colors.orange.shade50,
-                      Colors.orange.shade700,
-                      () {
-                        _showStudentDetails(context);
-                      },
-                    ),
-                    _buildActionCard(
-                      context,
                       'Monthly Reports',
                       Icons.assessment_outlined,
                       Colors.purple.shade50,
@@ -189,28 +179,6 @@ class StudentRecordScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  void _showStudentDetails(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Text('Select Student'),
-            content: Text(
-              'This will show a list of students to select for viewing detailed information',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Close'),
-              ),
-            ],
-          ),
     );
   }
 
