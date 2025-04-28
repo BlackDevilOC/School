@@ -76,51 +76,10 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
   }
 
   void _loadFees() {
-    // In a real app, this would load from a database
-    // For now, we'll use dummy data
-    _fees = [
-      // Class Students
-      Fee(
-        id: '1',
-        studentName: 'John Doe',
-        classGrade: '10th',
-        amount: 500.0,
-        dueDate: DateTime.now().add(const Duration(days: 7)),
-        isPaid: false,
-        isClassStudent: true,
-      ),
-      Fee(
-        id: '2',
-        studentName: 'Jane Smith',
-        classGrade: '9th',
-        amount: 450.0,
-        dueDate: DateTime.now().add(const Duration(days: 14)),
-        isPaid: true,
-        isClassStudent: true,
-      ),
-      // Course Students
-      Fee(
-        id: '3',
-        studentName: 'Frank Miller',
-        courseName: 'Web Development',
-        batchNumber: 'WD-2024',
-        amount: 800.0,
-        dueDate: DateTime.now().add(const Duration(days: 10)),
-        isPaid: false,
-        isClassStudent: false,
-      ),
-      Fee(
-        id: '4',
-        studentName: 'Grace Taylor',
-        courseName: 'Mobile App Development',
-        batchNumber: 'MAD-2024',
-        amount: 900.0,
-        dueDate: DateTime.now().add(const Duration(days: 20)),
-        isPaid: true,
-        isClassStudent: false,
-      ),
-    ];
-    _filterFees();
+    setState(() {
+      _fees = _dataService.fees;
+      _filterFees();
+    });
   }
 
   void _filterFees() {
@@ -234,6 +193,34 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
             '${picked.day}/${picked.month}/${picked.year}';
       });
     }
+  }
+
+  void _togglePaymentStatus(Fee fee) {
+    final updatedFee = Fee(
+      id: fee.id,
+      studentName: fee.studentName,
+      classGrade: fee.classGrade,
+      courseName: fee.courseName,
+      batchNumber: fee.batchNumber,
+      amount: fee.amount,
+      dueDate: fee.dueDate,
+      isPaid: !fee.isPaid,
+      isClassStudent: fee.isClassStudent,
+    );
+
+    _dataService.updateFee(fee.id, updatedFee);
+    _loadFees();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          updatedFee.isPaid
+              ? 'Payment status updated to Paid'
+              : 'Payment status updated to Pending',
+        ),
+        backgroundColor: updatedFee.isPaid ? Colors.green : Colors.orange,
+      ),
+    );
   }
 
   @override
@@ -390,6 +377,16 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
   }
 
   Widget _buildFeeTable() {
+    if (_fees.isEmpty) {
+      return Center(
+        child: Text(
+          'No fee records found.\nAdd students from the Manage Students page to see their fees here.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: DataTable(
@@ -428,10 +425,11 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
             label: const Text('Status'),
             onSort: (columnIndex, ascending) => _sortFees('status', ascending),
           ),
-          const DataColumn(label: Text('Actions')),
         ],
         rows:
             _filteredFees.map((fee) {
+              final bool isOverdue =
+                  !fee.isPaid && fee.dueDate.isBefore(DateTime.now());
               return DataRow(
                 cells: [
                   DataCell(Text(fee.studentName)),
@@ -445,32 +443,78 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
                   DataCell(
                     Text(
                       '${fee.dueDate.day}/${fee.dueDate.month}/${fee.dueDate.year}',
+                      style:
+                          isOverdue
+                              ? TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                              )
+                              : null,
                     ),
                   ),
                   DataCell(
-                    Text(
-                      fee.isPaid ? 'Paid' : 'Pending',
-                      style: TextStyle(
-                        color: fee.isPaid ? Colors.green : Colors.red,
-                        fontWeight: FontWeight.bold,
+                    GestureDetector(
+                      onTap: () => _togglePaymentStatus(fee),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              fee.isPaid
+                                  ? Colors.green.withOpacity(0.1)
+                                  : isOverdue
+                                  ? Colors.red.withOpacity(0.1)
+                                  : Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color:
+                                fee.isPaid
+                                    ? Colors.green
+                                    : isOverdue
+                                    ? Colors.red
+                                    : Colors.orange,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              fee.isPaid
+                                  ? Icons.check_circle
+                                  : isOverdue
+                                  ? Icons.warning
+                                  : Icons.pending,
+                              color:
+                                  fee.isPaid
+                                      ? Colors.green
+                                      : isOverdue
+                                      ? Colors.red
+                                      : Colors.orange,
+                              size: 16,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              fee.isPaid
+                                  ? 'Paid'
+                                  : isOverdue
+                                  ? 'Overdue'
+                                  : 'Pending',
+                              style: TextStyle(
+                                color:
+                                    fee.isPaid
+                                        ? Colors.green
+                                        : isOverdue
+                                        ? Colors.red
+                                        : Colors.orange,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                  DataCell(
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _showAddEditFeeDialog(fee),
-                          color: Colors.blue,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () => _deleteFee(fee),
-                          color: Colors.red,
-                        ),
-                      ],
                     ),
                   ),
                 ],
@@ -695,43 +739,5 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
         ),
       );
     }
-  }
-
-  void _deleteFee(Fee fee) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Delete Fee Record'),
-            content: const Text(
-              'Are you sure you want to delete this fee record?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _fees.removeWhere((f) => f.id == fee.id);
-                    _filterFees();
-                  });
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Fee record deleted successfully'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                },
-                child: const Text(
-                  'Delete',
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-            ],
-          ),
-    );
   }
 }

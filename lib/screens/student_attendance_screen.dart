@@ -15,11 +15,11 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   late List<Map<String, dynamic>> filteredStudents;
 
   DateTime _selectedDate = DateTime.now();
-  bool _isClassStudent = true; // Default to class students
+  bool _isClassStudent = true;
   String _selectedClass = 'All';
   String _selectedBatch = 'All';
+  bool _hasChanges = false;
 
-  // Get unique class grades
   List<String> get _classGrades {
     final grades =
         students
@@ -31,7 +31,6 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     return ['All', ...grades];
   }
 
-  // Get unique batch numbers
   List<String> get _batchNumbers {
     final batches =
         students
@@ -88,19 +87,24 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
       final String id = student['id'];
       final bool newValue = !student['isPresent'];
 
-      // Update the local state
       student['isPresent'] = newValue;
-
-      // Update in the data service
       _dataService.updateStudentAttendance(id, newValue);
-    });
-  }
+      _hasChanges = true;
 
-  void _submitAttendance() {
-    // In a real app, this would save the attendance data to a database
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Attendance submitted successfully')),
-    );
+      // Show a subtle indicator that the change was saved
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${student['name']}\'s attendance marked as ${newValue ? 'Present' : 'Absent'}',
+          ),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor:
+              newValue ? Colors.green.shade700 : Colors.red.shade700,
+        ),
+      );
+    });
   }
 
   @override
@@ -108,7 +112,8 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Student Attendance'),
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.green.shade600,
+        elevation: 0,
       ),
       body: Column(
         children: [
@@ -116,7 +121,30 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
           _buildFilterOptions(),
           _buildAttendanceHeaderRow(),
           Expanded(child: _buildAttendanceList()),
-          _buildSubmitButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateSelector() {
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        border: Border(bottom: BorderSide(color: Colors.green.shade100)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.calendar_today, color: Colors.green.shade700, size: 20),
+          const SizedBox(width: 12),
+          Text(
+            'Date: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.green.shade900,
+            ),
+          ),
         ],
       ),
     );
@@ -125,6 +153,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   Widget _buildFilterOptions() {
     return Container(
       padding: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -132,9 +164,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
             children: [
               Expanded(
                 child: RadioListTile<bool>(
-                  title: Text('Class Students'),
+                  title: const Text('Class Students'),
                   value: true,
                   groupValue: _isClassStudent,
+                  activeColor: Colors.green.shade700,
                   onChanged: (bool? value) {
                     if (value != null) {
                       setState(() {
@@ -149,9 +182,10 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               ),
               Expanded(
                 child: RadioListTile<bool>(
-                  title: Text('Course Students'),
+                  title: const Text('Course Students'),
                   value: false,
                   groupValue: _isClassStudent,
+                  activeColor: Colors.green.shade700,
                   onChanged: (bool? value) {
                     if (value != null) {
                       setState(() {
@@ -166,12 +200,16 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
               ),
             ],
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           if (_isClassStudent)
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: 'Filter by Class',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
               ),
               value: _selectedClass,
               items:
@@ -194,7 +232,11 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: 'Filter by Batch',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
               ),
               value: _selectedBatch,
               items:
@@ -218,56 +260,53 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     );
   }
 
-  Widget _buildDateSelector() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Date: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          ElevatedButton.icon(
-            onPressed: () => _selectDate(context),
-            icon: const Icon(Icons.calendar_today),
-            label: const Text('Select Date'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildAttendanceHeaderRow() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      color: Colors.grey.shade200,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+      ),
       child: Row(
         children: [
           Expanded(
             flex: 1,
             child: Text(
               'Roll No.',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
             ),
           ),
           Expanded(
             flex: 2,
-            child: Text('Name', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              'Name',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
+            ),
           ),
           Expanded(
             flex: 2,
             child: Text(
               _isClassStudent ? 'Class' : 'Course/Batch',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
             ),
           ),
           Expanded(
             flex: 1,
             child: Text(
               'Status',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -277,84 +316,104 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   }
 
   Widget _buildAttendanceList() {
+    if (filteredStudents.isEmpty) {
+      return Center(
+        child: Text(
+          'No students found for the selected filter',
+          style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+        ),
+      );
+    }
+
     return ListView.builder(
       itemCount: filteredStudents.length,
       itemBuilder: (context, index) {
         final student = filteredStudents[index];
         final bool isPresent = student['isPresent'] ?? false;
 
-        return GestureDetector(
+        return InkWell(
           onTap: () => _toggleAttendance(index),
-          child: Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-            color: isPresent ? Colors.green.shade100 : Colors.red.shade100,
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 1,
-                    child: Text(
-                      '${student['rollNumber']}',
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isPresent ? Colors.green.shade50 : Colors.red.shade50,
+              border: Border(
+                bottom: BorderSide(
+                  color:
+                      isPresent ? Colors.green.shade100 : Colors.red.shade100,
+                ),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    '${student['rollNumber']}',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      '${student['name']}',
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    '${student['name']}',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      _isClassStudent
-                          ? '${student['classGrade']}'
-                          : '${student['courseName']}\n${student['batchNumber']}',
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    _isClassStudent
+                        ? '${student['classGrade']}'
+                        : '${student['courseName']}\n${student['batchNumber']}',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
-                  Expanded(
-                    flex: 1,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Switch(
-                          value: isPresent,
-                          onChanged: (_) => _toggleAttendance(index),
-                          activeColor: Colors.green,
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
-                        Text(
+                        decoration: BoxDecoration(
+                          color:
+                              isPresent
+                                  ? Colors.green.shade100
+                                  : Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color:
+                                isPresent
+                                    ? Colors.green.shade300
+                                    : Colors.red.shade300,
+                          ),
+                        ),
+                        child: Text(
                           isPresent ? 'P' : 'A',
                           style: TextStyle(
-                            color: isPresent ? Colors.green : Colors.red,
+                            color:
+                                isPresent
+                                    ? Colors.green.shade700
+                                    : Colors.red.shade700,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         );
       },
-    );
-  }
-
-  Widget _buildSubmitButton() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: ElevatedButton(
-        onPressed: _submitAttendance,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green,
-          minimumSize: const Size(double.infinity, 50),
-        ),
-        child: const Text('Submit Attendance', style: TextStyle(fontSize: 18)),
-      ),
     );
   }
 }

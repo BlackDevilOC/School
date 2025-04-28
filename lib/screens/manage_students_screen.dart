@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/data_service.dart';
+import '../models/fee.dart';
 
 class ManageStudentsScreen extends StatefulWidget {
   const ManageStudentsScreen({super.key});
@@ -19,6 +20,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _courseNameController = TextEditingController();
   final TextEditingController _batchNumberController = TextEditingController();
+  final TextEditingController _feeAmountController = TextEditingController();
 
   String? _currentStudentId;
   bool _isEditing = false;
@@ -38,6 +40,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
     _phoneNumberController.dispose();
     _courseNameController.dispose();
     _batchNumberController.dispose();
+    _feeAmountController.dispose();
     super.dispose();
   }
 
@@ -49,6 +52,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
     _phoneNumberController.clear();
     _courseNameController.clear();
     _batchNumberController.clear();
+    _feeAmountController.clear();
     _currentStudentId = null;
     _isEditing = false;
     setState(() {
@@ -66,6 +70,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
       _phoneNumberController.text = student['phoneNumber'];
       _courseNameController.text = student['courseName'] ?? '';
       _batchNumberController.text = student['batchNumber'] ?? '';
+      _feeAmountController.text = student['feeAmount']?.toString() ?? '';
       _isEditing = true;
       _isClassStudent = student['isClassStudent'] ?? true;
     } else {
@@ -270,6 +275,40 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                           },
                         ),
                         SizedBox(height: 20),
+                        Divider(height: 32),
+                        Text(
+                          'Fee Information',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          controller: _feeAmountController,
+                          decoration: InputDecoration(
+                            labelText: 'Fee Amount',
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Colors.green,
+                                width: 2.0,
+                              ),
+                            ),
+                            prefixText: '\$',
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter fee amount';
+                            }
+                            if (double.tryParse(value) == null) {
+                              return 'Please enter a valid amount';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
@@ -284,7 +323,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                               child: Text('Cancel'),
                             ),
                             ElevatedButton(
-                              onPressed: _saveStudent,
+                              onPressed: _submitForm,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
                               ),
@@ -302,72 +341,64 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
     );
   }
 
-  void _saveStudent() {
+  void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      Navigator.pop(context);
+      final student = {
+        'name': _nameController.text,
+        'isClassStudent': _isClassStudent,
+        'rollNumber': int.parse(_rollNumberController.text),
+        'phoneNumber': _phoneNumberController.text,
+        'feeAmount': double.tryParse(_feeAmountController.text) ?? 0.0,
+      };
 
-      final name = _nameController.text;
-      final rollNumber = int.parse(_rollNumberController.text);
-      final phoneNumber = _phoneNumberController.text;
+      if (_isClassStudent) {
+        student['classGrade'] = _classGradeController.text;
+      } else {
+        student['courseName'] = _courseNameController.text;
+        student['batchNumber'] = _batchNumberController.text;
+      }
+
+      if (_isEditing && _currentStudentId != null) {
+        student['id'] = _currentStudentId!;
+        _dataService.updateStudent(_currentStudentId!, student);
+      } else {
+        student['id'] = DateTime.now().millisecondsSinceEpoch.toString();
+        _dataService.addStudent(student);
+      }
+
+      // Create initial fee record
+      if (!_isEditing) {
+        final fee = Fee(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          studentName: _nameController.text,
+          classGrade: _isClassStudent ? _classGradeController.text : null,
+          courseName: !_isClassStudent ? _courseNameController.text : null,
+          batchNumber: !_isClassStudent ? _batchNumberController.text : null,
+          amount: double.parse(_feeAmountController.text),
+          dueDate: DateTime.now().add(
+            const Duration(days: 30),
+          ), // Default due date to 30 days from now
+          isPaid: false,
+          isClassStudent: _isClassStudent,
+        );
+        _dataService.addFee(fee);
+      }
 
       setState(() {
-        if (_isEditing) {
-          // Update existing student
-          final updatedStudent = {
-            'id': _currentStudentId!,
-            'name': name,
-            'classGrade': _isClassStudent ? _classGradeController.text : null,
-            'courseName': !_isClassStudent ? _courseNameController.text : null,
-            'batchNumber':
-                !_isClassStudent ? _batchNumberController.text : null,
-            'rollNumber': rollNumber,
-            'phoneNumber': phoneNumber,
-            'isPresent':
-                students.firstWhere(
-                  (s) => s['id'] == _currentStudentId,
-                )['isPresent'] ??
-                true,
-            'isClassStudent': _isClassStudent,
-          };
-
-          _dataService.updateStudent(_currentStudentId!, updatedStudent);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Student updated successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else {
-          // Add new student
-          final newId =
-              (int.parse(students.isNotEmpty ? students.last['id'] : '0') + 1)
-                  .toString();
-          final newStudent = {
-            'id': newId,
-            'name': name,
-            'classGrade': _isClassStudent ? _classGradeController.text : null,
-            'courseName': !_isClassStudent ? _courseNameController.text : null,
-            'batchNumber':
-                !_isClassStudent ? _batchNumberController.text : null,
-            'rollNumber': rollNumber,
-            'phoneNumber': phoneNumber,
-            'isPresent': true,
-            'isClassStudent': _isClassStudent,
-          };
-
-          _dataService.addStudent(newStudent);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Student added successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-        // Refresh students list from data service
         students = _dataService.students;
       });
 
-      _resetForm();
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isEditing
+                ? 'Student updated successfully!'
+                : 'Student added successfully!',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
     }
   }
 

@@ -1,6 +1,8 @@
 // This service handles data management and synchronization
 // between different screens in the application
 
+import '../models/fee.dart';
+
 class DataService {
   // Singleton pattern
   static final DataService _instance = DataService._internal();
@@ -9,7 +11,24 @@ class DataService {
     return _instance;
   }
 
-  DataService._internal();
+  DataService._internal() {
+    // Initialize fees from student data
+    for (var student in _students) {
+      _fees.add(
+        Fee(
+          id: 'fee_${student['id']}',
+          studentName: student['name'],
+          classGrade: student['classGrade'],
+          courseName: student['courseName'],
+          batchNumber: student['batchNumber'],
+          amount: student['feeAmount'],
+          dueDate: DateTime.parse(student['feeDueDate']),
+          isPaid: false, // Initially set all fees as unpaid
+          isClassStudent: student['isClassStudent'],
+        ),
+      );
+    }
+  }
 
   // Student data
   final List<Map<String, dynamic>> _students = [
@@ -23,6 +42,9 @@ class DataService {
       'phoneNumber': '555-111-2222',
       'isPresent': true,
       'isClassStudent': true,
+      'feeAmount': 500.0,
+      'feeDueDate':
+          DateTime.now().add(const Duration(days: 30)).toIso8601String(),
     },
     {
       'id': '2',
@@ -33,6 +55,9 @@ class DataService {
       'phoneNumber': '555-333-4444',
       'isPresent': false,
       'isClassStudent': true,
+      'feeAmount': 450.0,
+      'feeDueDate':
+          DateTime.now().add(const Duration(days: 15)).toIso8601String(),
     },
     {
       'id': '3',
@@ -43,6 +68,9 @@ class DataService {
       'phoneNumber': '555-555-6666',
       'isPresent': true,
       'isClassStudent': true,
+      'feeAmount': 550.0,
+      'feeDueDate':
+          DateTime.now().add(const Duration(days: 45)).toIso8601String(),
     },
     {
       'id': '4',
@@ -53,6 +81,9 @@ class DataService {
       'phoneNumber': '555-777-8888',
       'isPresent': true,
       'isClassStudent': true,
+      'feeAmount': 500.0,
+      'feeDueDate':
+          DateTime.now().subtract(const Duration(days: 5)).toIso8601String(),
     },
     {
       'id': '5',
@@ -63,6 +94,9 @@ class DataService {
       'phoneNumber': '555-999-0000',
       'isPresent': false,
       'isClassStudent': true,
+      'feeAmount': 450.0,
+      'feeDueDate':
+          DateTime.now().add(const Duration(days: 25)).toIso8601String(),
     },
     // Course Students
     {
@@ -75,6 +109,9 @@ class DataService {
       'phoneNumber': '555-111-3333',
       'isPresent': true,
       'isClassStudent': false,
+      'feeAmount': 800.0,
+      'feeDueDate':
+          DateTime.now().add(const Duration(days: 60)).toIso8601String(),
     },
     {
       'id': '7',
@@ -86,6 +123,9 @@ class DataService {
       'phoneNumber': '555-222-4444',
       'isPresent': true,
       'isClassStudent': false,
+      'feeAmount': 800.0,
+      'feeDueDate':
+          DateTime.now().subtract(const Duration(days: 10)).toIso8601String(),
     },
     {
       'id': '8',
@@ -97,6 +137,9 @@ class DataService {
       'phoneNumber': '555-333-5555',
       'isPresent': false,
       'isClassStudent': false,
+      'feeAmount': 900.0,
+      'feeDueDate':
+          DateTime.now().add(const Duration(days: 20)).toIso8601String(),
     },
     {
       'id': '9',
@@ -108,6 +151,9 @@ class DataService {
       'phoneNumber': '555-444-6666',
       'isPresent': true,
       'isClassStudent': false,
+      'feeAmount': 900.0,
+      'feeDueDate':
+          DateTime.now().add(const Duration(days: 40)).toIso8601String(),
     },
     {
       'id': '10',
@@ -119,6 +165,9 @@ class DataService {
       'phoneNumber': '555-555-7777',
       'isPresent': true,
       'isClassStudent': false,
+      'feeAmount': 1000.0,
+      'feeDueDate':
+          DateTime.now().add(const Duration(days: 30)).toIso8601String(),
     },
   ];
 
@@ -161,11 +210,17 @@ class DataService {
     },
   ];
 
+  // Fee data
+  final List<Fee> _fees = [];
+
   // Get all students
   List<Map<String, dynamic>> get students => _students;
 
   // Get all teachers
   List<Map<String, dynamic>> get teachers => _teachers;
+
+  // Get all fees
+  List<Fee> get fees => _fees;
 
   // Add a new student
   void addStudent(Map<String, dynamic> student) {
@@ -233,5 +288,28 @@ class DataService {
     if (index != -1) {
       _teachers[index]['isPresent'] = isPresent;
     }
+  }
+
+  // Add a new fee
+  void addFee(Fee fee) {
+    _fees.add(fee);
+  }
+
+  // Update a fee
+  void updateFee(String id, Fee updatedFee) {
+    final index = _fees.indexWhere((fee) => fee.id == id);
+    if (index != -1) {
+      _fees[index] = updatedFee;
+    }
+  }
+
+  // Delete a fee
+  void deleteFee(String id) {
+    _fees.removeWhere((fee) => fee.id == id);
+  }
+
+  // Get fees for a specific student
+  List<Fee> getStudentFees(String studentName) {
+    return _fees.where((fee) => fee.studentName == studentName).toList();
   }
 }
