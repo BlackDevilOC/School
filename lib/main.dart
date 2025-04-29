@@ -1,29 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'screens/login_screen.dart';
 import 'routes.dart';
 // import 'package:academy_portal/LoginScreen.dart'; // <-- Add this line
 
-void main() {
-  runApp(AcademyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'YOUR_SUPABASE_URL',
+    anonKey: 'YOUR_SUPABASE_ANON_KEY',
+  );
+
+  runApp(const MyApp());
 }
 
-class AcademyApp extends StatelessWidget {
-  const AcademyApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Academy Portal',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        primaryColor: Colors.green,
-        colorScheme: ColorScheme.fromSwatch().copyWith(
-          primary: Colors.green,
-          secondary: Colors.greenAccent,
-        ),
+        primarySwatch: Colors.green,
+        useMaterial3: true,
       ),
-      debugShowCheckedModeBanner: false,
-      initialRoute: Routes.login,
-      routes: Routes.getRoutes(),
+      home: LoginScreen(),
     );
   }
 }

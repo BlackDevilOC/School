@@ -1,0 +1,65 @@
+CREATE TABLE students (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    class_grade VARCHAR(50),
+    roll_number VARCHAR(50),
+    phone_number VARCHAR(20),
+    course_name VARCHAR(255),
+    batch_number VARCHAR(50),
+    is_class_student BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE attendance (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    attendance_date DATE NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('Present', 'Absent', 'Late', 'Excused')),
+    month INTEGER GENERATED ALWAYS AS (EXTRACT(MONTH FROM attendance_date)) STORED,
+    year INTEGER GENERATED ALWAYS AS (EXTRACT(YEAR FROM attendance_date)) STORED,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(student_id, attendance_date)
+);
+
+CREATE TABLE fee_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_date DATE NOT NULL,
+    due_date DATE NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('Paid', 'Pending', 'Overdue')),
+    month INTEGER GENERATED ALWAYS AS (EXTRACT(MONTH FROM payment_date)) STORED,
+    year INTEGER GENERATED ALWAYS AS (EXTRACT(YEAR FROM payment_date)) STORED,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE current_month_fees (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    amount DECIMAL(10,2) NOT NULL,
+    due_date DATE NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('Paid', 'Pending', 'Overdue')),
+    month INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(student_id, month, year)
+);
+
+-- Indexes for attendance table
+CREATE INDEX idx_attendance_student_id ON attendance(student_id);
+CREATE INDEX idx_attendance_date ON attendance(attendance_date);
+CREATE INDEX idx_attendance_month_year ON attendance(month, year);
+
+-- Indexes for fee history table
+CREATE INDEX idx_fee_history_student_id ON fee_history(student_id);
+CREATE INDEX idx_fee_history_payment_date ON fee_history(payment_date);
+CREATE INDEX idx_fee_history_month_year ON fee_history(month, year);
+
+-- Indexes for current month fees table
+CREATE INDEX idx_current_month_fees_student_id ON current_month_fees(student_id);
+CREATE INDEX idx_current_month_fees_month_year ON current_month_fees(month, year);
+

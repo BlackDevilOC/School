@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/data_service.dart';
+import '../models/student.dart';
+import '../models/attendance.dart';
+import '../services/database_service.dart';
 
 class StudentAttendanceScreen extends StatefulWidget {
   const StudentAttendanceScreen({super.key});
@@ -10,9 +12,11 @@ class StudentAttendanceScreen extends StatefulWidget {
 }
 
 class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
-  final DataService _dataService = DataService();
-  late List<Map<String, dynamic>> students;
-  late List<Map<String, dynamic>> filteredStudents;
+  final DatabaseService _databaseService = DatabaseService();
+  List<Student> _students = [];
+  List<Student> _filteredStudents = [];
+  List<Attendance> _attendanceRecords = [];
+  bool _isLoading = true;
 
   DateTime _selectedDate = DateTime.now();
   bool _isClassStudent = true;
@@ -21,23 +25,21 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   bool _hasChanges = false;
 
   List<String> get _classGrades {
-    final grades =
-        students
-            .where((s) => s['isClassStudent'] == true)
-            .map((s) => s['classGrade'] as String)
-            .toSet()
-            .toList();
+    final grades = _students
+        .where((s) => s.isClassStudent)
+        .map((s) => s.classGrade!)
+        .toSet()
+        .toList();
     grades.sort();
     return ['All', ...grades];
   }
 
   List<String> get _batchNumbers {
-    final batches =
-        students
-            .where((s) => s['isClassStudent'] == false)
-            .map((s) => s['batchNumber'] as String)
-            .toSet()
-            .toList();
+    final batches = _students
+        .where((s) => !s.isClassStudent)
+        .map((s) => s.batchNumber!)
+        .toSet()
+        .toList();
     batches.sort();
     return ['All', ...batches];
   }
@@ -45,25 +47,44 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   @override
   void initState() {
     super.initState();
-    students = _dataService.students;
-    _filterStudents();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    try {
+      final students = await _databaseService.getStudents();
+      final attendance = await _databaseService.getAttendanceForDate(
+        _selectedDate,
+      );
+
+      setState(() {
+        _students = students;
+        _attendanceRecords = attendance;
+        _filterStudents();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
+    }
   }
 
   void _filterStudents() {
     setState(() {
-      filteredStudents =
-          students.where((student) {
-            final isCorrectType = student['isClassStudent'] == _isClassStudent;
-            if (!isCorrectType) return false;
+      _filteredStudents = _students.where((student) {
+        if (student.isClassStudent != _isClassStudent) return false;
 
-            if (_isClassStudent) {
-              return _selectedClass == 'All' ||
-                  student['classGrade'] == _selectedClass;
-            } else {
-              return _selectedBatch == 'All' ||
-                  student['batchNumber'] == _selectedBatch;
-            }
-          }).toList();
+        if (_isClassStudent) {
+          return _selectedClass == 'All' ||
+              student.classGrade == _selectedClass;
+        } else {
+          return _selectedBatch == 'All' ||
+              student.batchNumber == _selectedBatch;
+        }
+      }).toList();
     });
   }
 
@@ -77,34 +98,84 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
+        _hasChanges = false;
       });
+      await _loadData();
     }
   }
 
-  void _toggleAttendance(int index) {
-    setState(() {
-      final student = filteredStudents[index];
-      final String id = student['id'];
-      final bool newValue = !student['isPresent'];
+  Future<void> _toggleAttendance(Student student) async {
+    final existingRecord = _attendanceRecords.firstWhere(
+      (a) => a.studentId == student.id,
+      orElse: () => Attendance(
+        id: '',
+        studentId: student.id,
+        attendanceDate: _selectedDate,
+        status: 'Present',
+        month: _selectedDate.month,
+        year: _selectedDate.year,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
 
-      student['isPresent'] = newValue;
-      _dataService.updateStudentAttendance(id, newValue);
-      _hasChanges = true;
+    final newStatus = existingRecord.status == 'Present' ? 'Absent' : 'Present';
 
-      // Show a subtle indicator that the change was saved
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${student['name']}\'s attendance marked as ${newValue ? 'Present' : 'Absent'}',
+    try {
+      if (existingRecord.id.isEmpty) {
+        await _databaseService.addAttendance(
+          Attendance(
+            id: '',
+            studentId: student.id,
+            attendanceDate: _selectedDate,
+            status: newStatus,
+            month: _selectedDate.month,
+            year: _selectedDate.year,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
           ),
-          duration: const Duration(seconds: 1),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor:
-              newValue ? Colors.green.shade700 : Colors.red.shade700,
-        ),
-      );
-    });
+        );
+      } else {
+        await _databaseService.updateAttendance(
+          Attendance(
+            id: existingRecord.id,
+            studentId: student.id,
+            attendanceDate: _selectedDate,
+            status: newStatus,
+            month: _selectedDate.month,
+            year: _selectedDate.year,
+            createdAt: existingRecord.createdAt,
+            updatedAt: DateTime.now(),
+          ),
+        );
+      }
+
+      setState(() {
+        _hasChanges = true;
+      });
+      await _loadData();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error updating attendance: $e')));
+    }
+  }
+
+  String _getAttendanceStatus(String studentId) {
+    final record = _attendanceRecords.firstWhere(
+      (a) => a.studentId == studentId,
+      orElse: () => Attendance(
+        id: '',
+        studentId: studentId,
+        attendanceDate: _selectedDate,
+        status: 'Absent',
+        month: _selectedDate.month,
+        year: _selectedDate.year,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+    return record.status;
   }
 
   @override
@@ -112,308 +183,110 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Student Attendance'),
-        backgroundColor: Colors.green.shade600,
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          _buildDateSelector(),
-          _buildFilterOptions(),
-          _buildAttendanceHeaderRow(),
-          Expanded(child: _buildAttendanceList()),
+        actions: [
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadData),
         ],
       ),
-    );
-  }
-
-  Widget _buildDateSelector() {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.green.shade50,
-        border: Border(bottom: BorderSide(color: Colors.green.shade100)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.calendar_today, color: Colors.green.shade700, size: 20),
-          const SizedBox(width: 12),
-          Text(
-            'Date: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.green.shade900,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterOptions() {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: RadioListTile<bool>(
-                  title: const Text('Class Students'),
-                  value: true,
-                  groupValue: _isClassStudent,
-                  activeColor: Colors.green.shade700,
-                  onChanged: (bool? value) {
-                    if (value != null) {
-                      setState(() {
-                        _isClassStudent = value;
-                        _selectedClass = 'All';
-                        _selectedBatch = 'All';
-                        _filterStudents();
-                      });
-                    }
-                  },
-                ),
-              ),
-              Expanded(
-                child: RadioListTile<bool>(
-                  title: const Text('Course Students'),
-                  value: false,
-                  groupValue: _isClassStudent,
-                  activeColor: Colors.green.shade700,
-                  onChanged: (bool? value) {
-                    if (value != null) {
-                      setState(() {
-                        _isClassStudent = value;
-                        _selectedClass = 'All';
-                        _selectedBatch = 'All';
-                        _filterStudents();
-                      });
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (_isClassStudent)
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: 'Filter by Class',
-                border: const OutlineInputBorder(),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-              ),
-              value: _selectedClass,
-              items:
-                  _classGrades
-                      .map(
-                        (grade) =>
-                            DropdownMenuItem(value: grade, child: Text(grade)),
-                      )
-                      .toList(),
-              onChanged: (String? value) {
-                if (value != null) {
-                  setState(() {
-                    _selectedClass = value;
-                    _filterStudents();
-                  });
-                }
-              },
-            )
-          else
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: 'Filter by Batch',
-                border: const OutlineInputBorder(),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-              ),
-              value: _selectedBatch,
-              items:
-                  _batchNumbers
-                      .map(
-                        (batch) =>
-                            DropdownMenuItem(value: batch, child: Text(batch)),
-                      )
-                      .toList(),
-              onChanged: (String? value) {
-                if (value != null) {
-                  setState(() {
-                    _selectedBatch = value;
-                    _filterStudents();
-                  });
-                }
-              },
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAttendanceHeaderRow() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 1,
-            child: Text(
-              'Roll No.',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              'Name',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              _isClassStudent ? 'Class' : 'Course/Batch',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 1,
-            child: Text(
-              'Status',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAttendanceList() {
-    if (filteredStudents.isEmpty) {
-      return Center(
-        child: Text(
-          'No students found for the selected filter',
-          style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: filteredStudents.length,
-      itemBuilder: (context, index) {
-        final student = filteredStudents[index];
-        final bool isPresent = student['isPresent'] ?? false;
-
-        return InkWell(
-          onTap: () => _toggleAttendance(index),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isPresent ? Colors.green.shade50 : Colors.red.shade50,
-              border: Border(
-                bottom: BorderSide(
-                  color:
-                      isPresent ? Colors.green.shade100 : Colors.red.shade100,
-                ),
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 12.0,
-            ),
-            child: Row(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
               children: [
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    '${student['rollNumber']}',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    '${student['name']}',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    _isClassStudent
-                        ? '${student['classGrade']}'
-                        : '${student['courseName']}\n${student['batchNumber']}',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              isPresent
-                                  ? Colors.green.shade100
-                                  : Colors.red.shade100,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color:
-                                isPresent
-                                    ? Colors.green.shade300
-                                    : Colors.red.shade300,
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _selectDate(context),
+                          icon: const Icon(Icons.calendar_today),
+                          label: Text(
+                            '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
                           ),
                         ),
-                        child: Text(
-                          isPresent ? 'P' : 'A',
-                          style: TextStyle(
-                            color:
-                                isPresent
-                                    ? Colors.green.shade700
-                                    : Colors.red.shade700,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      SwitchListTile(
+                        title: const Text('Class Students'),
+                        value: _isClassStudent,
+                        onChanged: (value) {
+                          setState(() {
+                            _isClassStudent = value;
+                            _selectedClass = 'All';
+                            _selectedBatch = 'All';
+                          });
+                          _filterStudents();
+                        },
                       ),
                     ],
                   ),
                 ),
+                if (_isClassStudent)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedClass,
+                      items: _classGrades.map((grade) {
+                        return DropdownMenuItem(
+                          value: grade,
+                          child: Text(grade),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() => _selectedClass = value!);
+                        _filterStudents();
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Select Class',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedBatch,
+                      items: _batchNumbers.map((batch) {
+                        return DropdownMenuItem(
+                          value: batch,
+                          child: Text(batch),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() => _selectedBatch = value!);
+                        _filterStudents();
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Select Batch',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                Expanded(
+                  child: _filteredStudents.isEmpty
+                      ? const Center(child: Text('No students found'))
+                      : ListView.builder(
+                          itemCount: _filteredStudents.length,
+                          itemBuilder: (context, index) {
+                            final student = _filteredStudents[index];
+                            final status = _getAttendanceStatus(student.id);
+                            return ListTile(
+                              title: Text(student.name),
+                              subtitle: Text(
+                                student.isClassStudent
+                                    ? 'Class: ${student.classGrade}'
+                                    : 'Course: ${student.courseName}',
+                              ),
+                              trailing: Switch(
+                                value: status == 'Present',
+                                onChanged: (_) => _toggleAttendance(student),
+                              ),
+                            );
+                          },
+                        ),
+                ),
               ],
             ),
-          ),
-        );
-      },
     );
   }
 }
