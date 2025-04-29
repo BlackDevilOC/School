@@ -20,6 +20,8 @@ class Routes {
   static const String manageTeachers = '/manage_teachers';
   static const String feeStructure = '/fee_structure';
 
+  static var routes;
+
   static Map<String, WidgetBuilder> getRoutes() {
     return {
       login: (context) => LoginScreen(),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../routes.dart';
 import 'monthly_report_screen.dart';
+import 'teacher_salary_screen.dart';
 
 class TeacherRecordScreen extends StatelessWidget {
   const TeacherRecordScreen({super.key});
@@ -69,16 +70,6 @@ class TeacherRecordScreen extends StatelessWidget {
                     ),
                     _buildActionCard(
                       context,
-                      'Teacher Details',
-                      Icons.person_search_outlined,
-                      Colors.orange.shade50,
-                      Colors.orange.shade700,
-                      () {
-                        _showTeacherDetails(context);
-                      },
-                    ),
-                    _buildActionCard(
-                      context,
                       'Monthly Reports',
                       Icons.assessment_outlined,
                       Colors.purple.shade50,
@@ -94,10 +85,10 @@ class TeacherRecordScreen extends StatelessWidget {
                       Colors.amber.shade50,
                       Colors.amber.shade700,
                       () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Salary Structure - Coming Soon'),
-                            behavior: SnackBarBehavior.floating,
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const TeacherSalaryScreen(),
                           ),
                         );
                       },
@@ -194,28 +185,6 @@ class TeacherRecordScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  void _showTeacherDetails(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: const Text('Select Teacher'),
-            content: const Text(
-              'This will show a list of teachers to select for viewing detailed information',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
     );
   }
 

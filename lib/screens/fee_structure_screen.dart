@@ -35,24 +35,22 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
 
   // Get unique class grades
   List<String> get _classGrades {
-    final grades =
-        _fees
-            .where((f) => f.isClassStudent)
-            .map((f) => f.classGrade!)
-            .toSet()
-            .toList();
+    final grades = _fees
+        .where((f) => f.isClassStudent)
+        .map((f) => f.classGrade!)
+        .toSet()
+        .toList();
     grades.sort();
     return ['All', ...grades];
   }
 
   // Get unique batch numbers
   List<String> get _batchNumbers {
-    final batches =
-        _fees
-            .where((f) => !f.isClassStudent)
-            .map((f) => f.batchNumber!)
-            .toSet()
-            .toList();
+    final batches = _fees
+        .where((f) => !f.isClassStudent)
+        .map((f) => f.batchNumber!)
+        .toSet()
+        .toList();
     batches.sort();
     return ['All', ...batches];
   }
@@ -85,31 +83,28 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
   void _filterFees() {
     final searchQuery = _searchController.text.toLowerCase();
     setState(() {
-      _filteredFees =
-          _fees.where((fee) {
-            // First filter by student type
-            if (fee.isClassStudent != _isClassStudent) return false;
+      _filteredFees = _fees.where((fee) {
+        // First filter by student type
+        if (fee.isClassStudent != _isClassStudent) return false;
 
-            // Then filter by class or batch
-            if (_isClassStudent) {
-              if (_selectedClass != 'All' && fee.classGrade != _selectedClass) {
-                return false;
-              }
-            } else {
-              if (_selectedBatch != 'All' &&
-                  fee.batchNumber != _selectedBatch) {
-                return false;
-              }
-            }
+        // Then filter by class or batch
+        if (_isClassStudent) {
+          if (_selectedClass != 'All' && fee.classGrade != _selectedClass) {
+            return false;
+          }
+        } else {
+          if (_selectedBatch != 'All' && fee.batchNumber != _selectedBatch) {
+            return false;
+          }
+        }
 
-            // Finally filter by search query
-            return fee.studentName.toLowerCase().contains(searchQuery) ||
-                (_isClassStudent
-                    ? (fee.classGrade?.toLowerCase().contains(searchQuery) ??
-                        false)
-                    : (fee.courseName?.toLowerCase().contains(searchQuery) ??
-                        false));
-          }).toList();
+        // Finally filter by search query
+        return fee.studentName.toLowerCase().contains(searchQuery) ||
+            (_isClassStudent
+                ? (fee.classGrade?.toLowerCase().contains(searchQuery) ?? false)
+                : (fee.courseName?.toLowerCase().contains(searchQuery) ??
+                    false));
+      }).toList();
 
       if (_sortColumn != null) {
         _sortFees(_sortColumn!, _sortAscending);
@@ -258,8 +253,8 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
         floatingActionButton: FloatingActionButton(
           onPressed: () => _showAddEditFeeDialog(),
           backgroundColor: Colors.green,
-          child: const Icon(Icons.add),
           tooltip: 'Add new fee record',
+          child: const Icon(Icons.add),
         ),
       ),
     );
@@ -317,13 +312,12 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
                 border: OutlineInputBorder(),
               ),
               value: _selectedClass,
-              items:
-                  _classGrades
-                      .map(
-                        (grade) =>
-                            DropdownMenuItem(value: grade, child: Text(grade)),
-                      )
-                      .toList(),
+              items: _classGrades
+                  .map(
+                    (grade) =>
+                        DropdownMenuItem(value: grade, child: Text(grade)),
+                  )
+                  .toList(),
               onChanged: (String? value) {
                 if (value != null) {
                   setState(() {
@@ -340,13 +334,12 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
                 border: OutlineInputBorder(),
               ),
               value: _selectedBatch,
-              items:
-                  _batchNumbers
-                      .map(
-                        (batch) =>
-                            DropdownMenuItem(value: batch, child: Text(batch)),
-                      )
-                      .toList(),
+              items: _batchNumbers
+                  .map(
+                    (batch) =>
+                        DropdownMenuItem(value: batch, child: Text(batch)),
+                  )
+                  .toList(),
               onChanged: (String? value) {
                 if (value != null) {
                   setState(() {
@@ -393,8 +386,8 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
         columns: [
           DataColumn(
             label: const Text('Student Name'),
-            onSort:
-                (columnIndex, ascending) => _sortFees('studentName', ascending),
+            onSort: (columnIndex, ascending) =>
+                _sortFees('studentName', ascending),
           ),
           if (_isClassStudent)
             DataColumn(
@@ -404,8 +397,8 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
           else ...[
             DataColumn(
               label: const Text('Course'),
-              onSort:
-                  (columnIndex, ascending) => _sortFees('course', ascending),
+              onSort: (columnIndex, ascending) =>
+                  _sortFees('course', ascending),
             ),
             DataColumn(
               label: const Text('Batch'),
@@ -426,100 +419,94 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
             onSort: (columnIndex, ascending) => _sortFees('status', ascending),
           ),
         ],
-        rows:
-            _filteredFees.map((fee) {
-              final bool isOverdue =
-                  !fee.isPaid && fee.dueDate.isBefore(DateTime.now());
-              return DataRow(
-                cells: [
-                  DataCell(Text(fee.studentName)),
-                  if (_isClassStudent)
-                    DataCell(Text(fee.classGrade ?? ''))
-                  else ...[
-                    DataCell(Text(fee.courseName ?? '')),
-                    DataCell(Text(fee.batchNumber ?? '')),
-                  ],
-                  DataCell(Text('\$${fee.amount.toStringAsFixed(2)}')),
-                  DataCell(
-                    Text(
-                      '${fee.dueDate.day}/${fee.dueDate.month}/${fee.dueDate.year}',
-                      style:
-                          isOverdue
-                              ? TextStyle(
-                                color: Colors.red,
-                                fontWeight: FontWeight.bold,
-                              )
-                              : null,
+        rows: _filteredFees.map((fee) {
+          final bool isOverdue =
+              !fee.isPaid && fee.dueDate.isBefore(DateTime.now());
+          return DataRow(
+            cells: [
+              DataCell(Text(fee.studentName)),
+              if (_isClassStudent)
+                DataCell(Text(fee.classGrade ?? ''))
+              else ...[
+                DataCell(Text(fee.courseName ?? '')),
+                DataCell(Text(fee.batchNumber ?? '')),
+              ],
+              DataCell(Text('\$${fee.amount.toStringAsFixed(2)}')),
+              DataCell(
+                Text(
+                  '${fee.dueDate.day}/${fee.dueDate.month}/${fee.dueDate.year}',
+                  style: isOverdue
+                      ? TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        )
+                      : null,
+                ),
+              ),
+              DataCell(
+                GestureDetector(
+                  onTap: () => _togglePaymentStatus(fee),
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                  ),
-                  DataCell(
-                    GestureDetector(
-                      onTap: () => _togglePaymentStatus(fee),
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color:
-                              fee.isPaid
-                                  ? Colors.green.withOpacity(0.1)
-                                  : isOverdue
-                                  ? Colors.red.withOpacity(0.1)
-                                  : Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color:
-                                fee.isPaid
-                                    ? Colors.green
-                                    : isOverdue
-                                    ? Colors.red
-                                    : Colors.orange,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              fee.isPaid
-                                  ? Icons.check_circle
-                                  : isOverdue
-                                  ? Icons.warning
-                                  : Icons.pending,
-                              color:
-                                  fee.isPaid
-                                      ? Colors.green
-                                      : isOverdue
-                                      ? Colors.red
-                                      : Colors.orange,
-                              size: 16,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              fee.isPaid
-                                  ? 'Paid'
-                                  : isOverdue
-                                  ? 'Overdue'
-                                  : 'Pending',
-                              style: TextStyle(
-                                color:
-                                    fee.isPaid
-                                        ? Colors.green
-                                        : isOverdue
-                                        ? Colors.red
-                                        : Colors.orange,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+                    decoration: BoxDecoration(
+                      color: fee.isPaid
+                          ? Colors.green.withOpacity(0.1)
+                          : isOverdue
+                              ? Colors.red.withOpacity(0.1)
+                              : Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: fee.isPaid
+                            ? Colors.green
+                            : isOverdue
+                                ? Colors.red
+                                : Colors.orange,
+                        width: 1,
                       ),
                     ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          fee.isPaid
+                              ? Icons.check_circle
+                              : isOverdue
+                                  ? Icons.warning
+                                  : Icons.pending,
+                          color: fee.isPaid
+                              ? Colors.green
+                              : isOverdue
+                                  ? Colors.red
+                                  : Colors.orange,
+                          size: 16,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          fee.isPaid
+                              ? 'Paid'
+                              : isOverdue
+                                  ? 'Overdue'
+                                  : 'Pending',
+                          style: TextStyle(
+                            color: fee.isPaid
+                                ? Colors.green
+                                : isOverdue
+                                    ? Colors.red
+                                    : Colors.orange,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              );
-            }).toList(),
+                ),
+              ),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -550,154 +537,139 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
 
     showDialog(
       context: context,
-      builder:
-          (context) => StatefulBuilder(
-            builder: (BuildContext context, StateSetter setDialogState) {
-              return AlertDialog(
-                title: Text(fee == null ? 'Add Fee Record' : 'Edit Fee Record'),
-                content: SingleChildScrollView(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+      builder: (context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setDialogState) {
+          return AlertDialog(
+            title: Text(fee == null ? 'Add Fee Record' : 'Edit Fee Record'),
+            content: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: RadioListTile<bool>(
-                                title: Text('Class'),
-                                value: true,
-                                groupValue: _isClassStudent,
-                                onChanged: (bool? value) {
-                                  if (value != null) {
-                                    setDialogState(() {
-                                      _isClassStudent = value;
-                                    });
-                                  }
-                                },
-                              ),
-                            ),
-                            Expanded(
-                              child: RadioListTile<bool>(
-                                title: Text('Course'),
-                                value: false,
-                                groupValue: _isClassStudent,
-                                onChanged: (bool? value) {
-                                  if (value != null) {
-                                    setDialogState(() {
-                                      _isClassStudent = value;
-                                    });
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
+                        Expanded(
+                          child: RadioListTile<bool>(
+                            title: Text('Class'),
+                            value: true,
+                            groupValue: _isClassStudent,
+                            onChanged: (bool? value) {
+                              if (value != null) {
+                                setDialogState(() {
+                                  _isClassStudent = value;
+                                });
+                              }
+                            },
+                          ),
                         ),
-                        SizedBox(height: 16),
-                        TextFormField(
-                          controller: _studentNameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Student Name',
-                            border: OutlineInputBorder(),
+                        Expanded(
+                          child: RadioListTile<bool>(
+                            title: Text('Course'),
+                            value: false,
+                            groupValue: _isClassStudent,
+                            onChanged: (bool? value) {
+                              if (value != null) {
+                                setDialogState(() {
+                                  _isClassStudent = value;
+                                });
+                              }
+                            },
                           ),
-                          validator:
-                              (value) =>
-                                  value?.isEmpty == true
-                                      ? 'Required field'
-                                      : null,
-                        ),
-                        SizedBox(height: 16),
-                        if (_isClassStudent)
-                          TextFormField(
-                            controller: _classGradeController,
-                            decoration: const InputDecoration(
-                              labelText: 'Class/Grade',
-                              border: OutlineInputBorder(),
-                            ),
-                            validator:
-                                (value) =>
-                                    value?.isEmpty == true
-                                        ? 'Required field'
-                                        : null,
-                          )
-                        else ...[
-                          TextFormField(
-                            controller: _courseNameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Course Name',
-                              border: OutlineInputBorder(),
-                            ),
-                            validator:
-                                (value) =>
-                                    value?.isEmpty == true
-                                        ? 'Required field'
-                                        : null,
-                          ),
-                          SizedBox(height: 16),
-                          TextFormField(
-                            controller: _batchNumberController,
-                            decoration: const InputDecoration(
-                              labelText: 'Batch Number',
-                              border: OutlineInputBorder(),
-                            ),
-                            validator:
-                                (value) =>
-                                    value?.isEmpty == true
-                                        ? 'Required field'
-                                        : null,
-                          ),
-                        ],
-                        SizedBox(height: 16),
-                        TextFormField(
-                          controller: _amountController,
-                          decoration: const InputDecoration(
-                            labelText: 'Amount',
-                            border: OutlineInputBorder(),
-                            prefixText: '\$',
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value?.isEmpty == true) return 'Required field';
-                            if (double.tryParse(value!) == null)
-                              return 'Enter valid amount';
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        TextFormField(
-                          controller: _dueDateController,
-                          decoration: const InputDecoration(
-                            labelText: 'Due Date',
-                            border: OutlineInputBorder(),
-                          ),
-                          readOnly: true,
-                          onTap: () => _selectDate(context),
-                          validator:
-                              (value) =>
-                                  value?.isEmpty == true
-                                      ? 'Required field'
-                                      : null,
                         ),
                       ],
                     ),
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => _saveFee(fee),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _studentNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Student Name',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) =>
+                          value?.isEmpty == true ? 'Required field' : null,
                     ),
-                    child: Text(fee == null ? 'Add' : 'Update'),
-                  ),
-                ],
-              );
-            },
-          ),
+                    SizedBox(height: 16),
+                    if (_isClassStudent)
+                      TextFormField(
+                        controller: _classGradeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Class/Grade',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) =>
+                            value?.isEmpty == true ? 'Required field' : null,
+                      )
+                    else ...[
+                      TextFormField(
+                        controller: _courseNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Course Name',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) =>
+                            value?.isEmpty == true ? 'Required field' : null,
+                      ),
+                      SizedBox(height: 16),
+                      TextFormField(
+                        controller: _batchNumberController,
+                        decoration: const InputDecoration(
+                          labelText: 'Batch Number',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) =>
+                            value?.isEmpty == true ? 'Required field' : null,
+                      ),
+                    ],
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _amountController,
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                        border: OutlineInputBorder(),
+                        prefixText: '\$',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value?.isEmpty == true) return 'Required field';
+                        if (double.tryParse(value!) == null) {
+                          return 'Enter valid amount';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _dueDateController,
+                      decoration: const InputDecoration(
+                        labelText: 'Due Date',
+                        border: OutlineInputBorder(),
+                      ),
+                      readOnly: true,
+                      onTap: () => _selectDate(context),
+                      validator: (value) =>
+                          value?.isEmpty == true ? 'Required field' : null,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => _saveFee(fee),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                ),
+                child: Text(fee == null ? 'Add' : 'Update'),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
