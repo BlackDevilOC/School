@@ -1,0 +1,240 @@
+Launching lib\main.dart on Chrome in debug mode...
+lib/services/database_service.dart:6:1: Error: 'PaymentStatus' is imported from both 'package:school_management/models/fee.dart' and 'package:school_management/models/salary.dart'.
+import '../models/salary.dart';
+^^^^^^^^^^^^^
+lib/screens/manage_students_screen.dart:373:11: Error: No named parameter with the name 'studentName'.
+          studentName: _nameController.text,
+          ^^^^^^^^^^^
+lib/models/fee.dart:16:3: Context: Found this candidate, but the arguments don't match.
+  Fee({
+  ^^^
+lib/screens/fee_structure_screen.dart:39:25: Error: The getter 'isClassStudent' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isClassStudent'.
+        .where((f) => f.isClassStudent)
+                        ^^^^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:40:23: Error: The getter 'classGrade' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'classGrade'.
+        .map((f) => f.classGrade!)
+                      ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:50:26: Error: The getter 'isClassStudent' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isClassStudent'.
+        .where((f) => !f.isClassStudent)
+                         ^^^^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:51:23: Error: The getter 'batchNumber' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'batchNumber'.
+        .map((f) => f.batchNumber!)
+                      ^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:88:17: Error: The getter 'isClassStudent' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isClassStudent'.
+        if (fee.isClassStudent != _isClassStudent) return false;
+                ^^^^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:92:46: Error: The getter 'classGrade' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'classGrade'.
+          if (_selectedClass != 'All' && fee.classGrade != _selectedClass) {
+                                             ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:96:46: Error: The getter 'batchNumber' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'batchNumber'.
+          if (_selectedBatch != 'All' && fee.batchNumber != _selectedBatch) {
+                                             ^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:102:20: Error: The getter 'studentName' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'studentName'.
+        return fee.studentName.toLowerCase().contains(searchQuery) ||
+                   ^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:104:24: Error: The getter 'classGrade' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'classGrade'.
+                ? (fee.classGrade?.toLowerCase().contains(searchQuery) ?? false)
+                       ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:105:24: Error: The getter 'courseName' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'courseName'.
+                : (fee.courseName?.toLowerCase().contains(searchQuery) ??
+                       ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:126:24: Error: The getter 'studentName' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'studentName'.
+            aValue = a.studentName;
+                       ^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:127:24: Error: The getter 'studentName' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'studentName'.
+            bValue = b.studentName;
+                       ^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:130:24: Error: The getter 'classGrade' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'classGrade'.
+            aValue = a.classGrade ?? '';
+                       ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:131:24: Error: The getter 'classGrade' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'classGrade'.
+            bValue = b.classGrade ?? '';
+                       ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:134:24: Error: The getter 'courseName' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'courseName'.
+            aValue = a.courseName ?? '';
+                       ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:135:24: Error: The getter 'courseName' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'courseName'.
+            bValue = b.courseName ?? '';
+                       ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:138:24: Error: The getter 'batchNumber' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'batchNumber'.
+            aValue = a.batchNumber ?? '';
+                       ^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:139:24: Error: The getter 'batchNumber' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'batchNumber'.
+            bValue = b.batchNumber ?? '';
+                       ^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:150:24: Error: The getter 'isPaid' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isPaid'.
+            aValue = a.isPaid;
+                       ^^^^^^
+lib/screens/fee_structure_screen.dart:151:24: Error: The getter 'isPaid' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isPaid'.
+            bValue = b.isPaid;
+                       ^^^^^^
+lib/screens/fee_structure_screen.dart:196:7: Error: No named parameter with the name 'studentName'.
+      studentName: fee.studentName,
+      ^^^^^^^^^^^
+lib/models/fee.dart:16:3: Context: Found this candidate, but the arguments don't match.
+  Fee({
+  ^^^
+lib/screens/fee_structure_screen.dart:424:20: Error: The getter 'isPaid' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isPaid'.
+              !fee.isPaid && fee.dueDate.isBefore(DateTime.now());
+                   ^^^^^^
+lib/screens/fee_structure_screen.dart:427:33: Error: The getter 'studentName' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'studentName'.
+              DataCell(Text(fee.studentName)),
+                                ^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:429:35: Error: The getter 'classGrade' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'classGrade'.
+                DataCell(Text(fee.classGrade ?? ''))
+                                  ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:431:35: Error: The getter 'courseName' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'courseName'.
+                DataCell(Text(fee.courseName ?? '')),
+                                  ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:432:35: Error: The getter 'batchNumber' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'batchNumber'.
+                DataCell(Text(fee.batchNumber ?? '')),
+                                  ^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:455:34: Error: The getter 'isPaid' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isPaid'.
+                      color: fee.isPaid
+                                 ^^^^^^
+lib/screens/fee_structure_screen.dart:462:36: Error: The getter 'isPaid' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isPaid'.
+                        color: fee.isPaid
+                                   ^^^^^^
+lib/screens/fee_structure_screen.dart:474:31: Error: The getter 'isPaid' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isPaid'.
+                          fee.isPaid
+                              ^^^^^^
+lib/screens/fee_structure_screen.dart:479:38: Error: The getter 'isPaid' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isPaid'.
+                          color: fee.isPaid
+                                     ^^^^^^
+lib/screens/fee_structure_screen.dart:488:31: Error: The getter 'isPaid' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isPaid'.
+                          fee.isPaid
+                              ^^^^^^
+lib/screens/fee_structure_screen.dart:494:40: Error: The getter 'isPaid' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isPaid'.
+                            color: fee.isPaid
+                                       ^^^^^^
+lib/screens/fee_structure_screen.dart:516:41: Error: The getter 'studentName' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'studentName'.
+      _studentNameController.text = fee.studentName;
+                                        ^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:517:15: Error: The getter 'isClassStudent' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isClassStudent'.
+      if (fee.isClassStudent) {
+              ^^^^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:518:42: Error: The getter 'classGrade' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'classGrade'.
+        _classGradeController.text = fee.classGrade ?? '';
+                                         ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:520:42: Error: The getter 'courseName' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'courseName'.
+        _courseNameController.text = fee.courseName ?? '';
+                                         ^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:521:43: Error: The getter 'batchNumber' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'batchNumber'.
+        _batchNumberController.text = fee.batchNumber ?? '';
+                                          ^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:527:29: Error: The getter 'isClassStudent' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'isClassStudent'.
+      _isClassStudent = fee.isClassStudent;
+                            ^^^^^^^^^^^^^^
+lib/screens/fee_structure_screen.dart:680:9: Error: No named parameter with the name 'studentName'.
+        studentName: _studentNameController.text,
+        ^^^^^^^^^^^
+lib/models/fee.dart:16:3: Context: Found this candidate, but the arguments don't match.
+  Fee({
+  ^^^
+lib/services/data_service.dart:20:11: Error: No named parameter with the name 'studentName'.
+          studentName: student['name'],
+          ^^^^^^^^^^^
+lib/models/fee.dart:16:3: Context: Found this candidate, but the arguments don't match.
+  Fee({
+  ^^^
+lib/services/data_service.dart:318:37: Error: The getter 'studentName' isn't defined for the class 'Fee'.
+ - 'Fee' is from 'package:school_management/models/fee.dart' ('lib/models/fee.dart').
+Try correcting the name to the name of an existing getter, or defining a getter or field named 'studentName'.
+    return _fees.where((fee) => fee.studentName == studentName).toList();
+                                    ^^^^^^^^^^^
+Unhandled exception:
+Unsupported operation: Unsupported invalid type InvalidType(<invalid>) (InvalidType). Encountered while compiling file:///C:/Users/HP/Downloads/retry/Managment/School/lib/services/database_service.dart, which contains the type: FunctionType(Future<bool> Function(String, <invalid>)).
+#0      ProgramCompiler._typeCompilationError (package:dev_compiler/src/kernel/compiler.dart:3471)
+#1      ProgramCompiler._emitType (package:dev_compiler/src/kernel/compiler.dart:3439)
+#2      ProgramCompiler._emitClassSignature (package:dev_compiler/src/kernel/compiler.dart:1713)
+#3      ProgramCompiler._emitClassDeclaration (package:dev_compiler/src/kernel/compiler.dart:1119)
+#4      ProgramCompiler._emitClass (package:dev_compiler/src/kernel/compiler.dart:1001)
+#5      List.forEach (dart:core-patch/growable_array.dart:421)
+#6      ProgramCompiler._emitLibrary (package:dev_compiler/src/kernel/compiler.dart:940)
+#7      List.forEach (dart:core-patch/growable_array.dart:421)
+#8      ProgramCompiler.emitModule (package:dev_compiler/src/kernel/compiler.dart:629)
+#9      IncrementalJavaScriptBundler.compile (package:frontend_server/src/javascript_bundle.dart:246)
+#10     FrontendCompiler.writeJavaScriptBundle (package:frontend_server/frontend_server.dart:877)
+<asynchronous suspension>
+#11     FrontendCompiler.compile (package:frontend_server/frontend_server.dart:693)
+<asynchronous suspension>
+#12     listenAndCompile.<anonymous closure> (package:frontend_server/frontend_server.dart:1401)
+<asynchronous suspension>
+the Dart compiler exited unexpectedly.
+Failed to compile application.
+
+Exited (1).

@@ -1,6 +1,5 @@
 import 'base_model.dart';
-
-enum PaymentStatus { pending, paid, overdue }
+import 'payment_status.dart';
 
 class Salary extends BaseModel {
   final String teacherId;
@@ -16,7 +15,7 @@ class Salary extends BaseModel {
     required this.teacherId,
     required this.amount,
     required this.month,
-    required this.status,
+    this.status = PaymentStatus.pending,
     this.paymentDate,
     this.paymentMethod,
     this.remarks,

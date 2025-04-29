@@ -1,7 +1,6 @@
 import 'base_model.dart';
 import 'student.dart';
-
-enum PaymentStatus { pending, paid, overdue }
+import 'payment_status.dart';
 
 enum PaymentMethod { cash, bankTransfer, online }
 
@@ -12,6 +11,10 @@ class Fee extends BaseModel {
   final double amount;
   final DateTime dueDate;
   final PaymentStatus status;
+  final DateTime? paidDate;
+  final String? paymentMethod;
+  final String? transactionId;
+  final String? notes;
 
   Fee({
     required super.id,
@@ -20,7 +23,11 @@ class Fee extends BaseModel {
     required this.month,
     required this.amount,
     required this.dueDate,
-    required this.status,
+    this.status = PaymentStatus.pending,
+    this.paidDate,
+    this.paymentMethod,
+    this.transactionId,
+    this.notes,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -37,6 +44,10 @@ class Fee extends BaseModel {
         (e) => e.toString().split('.').last == json['status'],
         orElse: () => PaymentStatus.pending,
       ),
+      paidDate: BaseModel.parseDateTime(json['paid_date']),
+      paymentMethod: json['payment_method'],
+      transactionId: json['transaction_id'],
+      notes: json['notes'],
       createdAt: BaseModel.parseDateTime(json['created_at']) ?? DateTime.now(),
       updatedAt: BaseModel.parseDateTime(json['updated_at']) ?? DateTime.now(),
     );
@@ -52,6 +63,10 @@ class Fee extends BaseModel {
       'amount': amount,
       'due_date': dueDate.toIso8601String(),
       'status': status.toString().split('.').last,
+      'paid_date': paidDate?.toIso8601String(),
+      'payment_method': paymentMethod,
+      'transaction_id': transactionId,
+      'notes': notes,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -64,6 +79,10 @@ class Fee extends BaseModel {
     double? amount,
     DateTime? dueDate,
     PaymentStatus? status,
+    DateTime? paidDate,
+    String? paymentMethod,
+    String? transactionId,
+    String? notes,
   }) {
     return Fee(
       id: id,
@@ -73,6 +92,10 @@ class Fee extends BaseModel {
       amount: amount ?? this.amount,
       dueDate: dueDate ?? this.dueDate,
       status: status ?? this.status,
+      paidDate: paidDate ?? this.paidDate,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      transactionId: transactionId ?? this.transactionId,
+      notes: notes ?? this.notes,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );

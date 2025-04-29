@@ -40,24 +40,22 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
 
   // Get unique class grades
   List<String> get _classGrades {
-    final grades =
-        _dataService.students
-            .where((s) => s['isClassStudent'] == true)
-            .map((s) => s['classGrade'] as String)
-            .toSet()
-            .toList();
+    final grades = _dataService.students
+        .where((s) => s['isClassStudent'] == true)
+        .map((s) => s['classGrade'] as String)
+        .toSet()
+        .toList();
     grades.sort();
     return ['All', ...grades];
   }
 
   // Get unique batch numbers
   List<String> get _batchNumbers {
-    final batches =
-        _dataService.students
-            .where((s) => s['isClassStudent'] == false)
-            .map((s) => s['batchNumber'] as String)
-            .toSet()
-            .toList();
+    final batches = _dataService.students
+        .where((s) => s['isClassStudent'] == false)
+        .map((s) => s['batchNumber'] as String)
+        .toSet()
+        .toList();
     batches.sort();
     return ['All', ...batches];
   }
@@ -76,32 +74,30 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
 
   void _updateFilteredData() {
     if (widget.isTeacher) {
-      _filteredData =
-          _dataService.teachers.where((teacher) {
-            final nameMatches = teacher['name'].toLowerCase().contains(
+      _filteredData = _dataService.teachers.where((teacher) {
+        final nameMatches = teacher['name'].toLowerCase().contains(
               _searchQuery.toLowerCase(),
             );
-            return nameMatches;
-          }).toList();
+        return nameMatches;
+      }).toList();
     } else {
-      _filteredData =
-          _dataService.students.where((student) {
-            final nameMatches = student['name'].toLowerCase().contains(
+      _filteredData = _dataService.students.where((student) {
+        final nameMatches = student['name'].toLowerCase().contains(
               _searchQuery.toLowerCase(),
             );
 
-            // Filter by student type first
-            if (student['isClassStudent'] != _isClassStudent) return false;
+        // Filter by student type first
+        if (student['isClassStudent'] != _isClassStudent) return false;
 
-            // Then filter by class or batch
-            if (_isClassStudent) {
-              return _selectedClass == 'All' ||
-                  student['classGrade'] == _selectedClass;
-            } else {
-              return _selectedBatch == 'All' ||
-                  student['batchNumber'] == _selectedBatch;
-            }
-          }).toList();
+        // Then filter by class or batch
+        if (_isClassStudent) {
+          return _selectedClass == 'All' ||
+              student['classGrade'] == _selectedClass;
+        } else {
+          return _selectedBatch == 'All' ||
+              student['batchNumber'] == _selectedBatch;
+        }
+      }).toList();
     }
     setState(() {});
   }
@@ -219,13 +215,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                         vertical: 4,
                       ),
                     ),
-                    items:
-                        _months.map((String month) {
-                          return DropdownMenuItem(
-                            value: month,
-                            child: Text(month),
-                          );
-                        }).toList(),
+                    items: _months.map((String month) {
+                      return DropdownMenuItem(
+                        value: month,
+                        child: Text(month),
+                      );
+                    }).toList(),
                     onChanged: (String? newValue) {
                       if (newValue != null) {
                         setState(() {
@@ -289,13 +284,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                             vertical: 4,
                           ),
                         ),
-                        items:
-                            _classGrades.map((String grade) {
-                              return DropdownMenuItem(
-                                value: grade,
-                                child: Text(grade),
-                              );
-                            }).toList(),
+                        items: _classGrades.map((String grade) {
+                          return DropdownMenuItem(
+                            value: grade,
+                            child: Text(grade),
+                          );
+                        }).toList(),
                         onChanged: (String? newValue) {
                           if (newValue != null) {
                             setState(() {
@@ -319,13 +313,12 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
                             vertical: 4,
                           ),
                         ),
-                        items:
-                            _batchNumbers.map((String batch) {
-                              return DropdownMenuItem(
-                                value: batch,
-                                child: Text(batch),
-                              );
-                            }).toList(),
+                        items: _batchNumbers.map((String batch) {
+                          return DropdownMenuItem(
+                            value: batch,
+                            child: Text(batch),
+                          );
+                        }).toList(),
                         onChanged: (String? newValue) {
                           if (newValue != null) {
                             setState(() {
@@ -441,10 +434,9 @@ class _MonthlyReportScreenState extends State<MonthlyReportScreen> {
       for (int i = 1; i <= _daysInMonth; i++) {
         // This is dummy data - replace with actual attendance data when implementing database
         final isPresent = data['isPresent'];
-        final attendanceText =
-            _showFullStatus
-                ? (isPresent ? 'Present' : 'Absent')
-                : (isPresent ? 'P' : 'A');
+        final attendanceText = _showFullStatus
+            ? (isPresent ? 'Present' : 'Absent')
+            : (isPresent ? 'P' : 'A');
         final textColor = isPresent ? Colors.green : Colors.red;
 
         cells.add(
