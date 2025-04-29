@@ -9,16 +9,18 @@ abstract class BaseModel {
     required this.updatedAt,
   });
 
-  Map<String, dynamic> toJson();
-
   static DateTime? parseDateTime(dynamic value) {
     if (value == null) return null;
+    if (value is DateTime) return value;
     if (value is String) {
-      return DateTime.parse(value);
-    }
-    if (value is DateTime) {
-      return value;
+      try {
+        return DateTime.parse(value);
+      } catch (e) {
+        return null;
+      }
     }
     return null;
   }
+
+  Map<String, dynamic> toJson();
 }

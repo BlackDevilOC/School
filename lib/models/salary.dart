@@ -33,9 +33,10 @@ class Salary extends BaseModel {
         (e) => e.toString().split('.').last == json['status'],
         orElse: () => PaymentStatus.pending,
       ),
-      paymentDate: json['payment_date'] != null
-          ? BaseModel.parseDateTime(json['payment_date'])
-          : null,
+      paymentDate:
+          json['payment_date'] != null
+              ? BaseModel.parseDateTime(json['payment_date'])
+              : null,
       paymentMethod: json['payment_method'],
       remarks: json['remarks'],
       createdAt: BaseModel.parseDateTime(json['created_at']) ?? DateTime.now(),
