@@ -179,6 +179,7 @@ class DataService {
       'subject': 'Mathematics',
       'phoneNumber': '555-123-4567',
       'isPresent': true,
+      'salary': 45000.0,
     },
     {
       'id': '2',
@@ -186,6 +187,7 @@ class DataService {
       'subject': 'Science',
       'phoneNumber': '555-987-6543',
       'isPresent': false,
+      'salary': 48000.0,
     },
     {
       'id': '3',
@@ -193,6 +195,7 @@ class DataService {
       'subject': 'English',
       'phoneNumber': '555-456-7890',
       'isPresent': true,
+      'salary': 42000.0,
     },
     {
       'id': '4',
@@ -200,6 +203,7 @@ class DataService {
       'subject': 'History',
       'phoneNumber': '555-234-5678',
       'isPresent': true,
+      'salary': 41000.0,
     },
     {
       'id': '5',
@@ -207,6 +211,7 @@ class DataService {
       'subject': 'Physical Education',
       'phoneNumber': '555-876-5432',
       'isPresent': false,
+      'salary': 40000.0,
     },
   ];
 

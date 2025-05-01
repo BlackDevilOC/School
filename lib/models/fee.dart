@@ -30,10 +30,9 @@ class Fee {
       courseName: map['courseName'],
       batchNumber: map['batchNumber'],
       amount: (map['amount'] ?? 0.0).toDouble(),
-      dueDate:
-          map['dueDate'] != null
-              ? DateTime.parse(map['dueDate'])
-              : DateTime.now(),
+      dueDate: map['dueDate'] != null
+          ? DateTime.parse(map['dueDate'])
+          : DateTime.now(),
       isPaid: map['isPaid'] ?? false,
       isClassStudent: map['isClassStudent'] ?? true,
     );
