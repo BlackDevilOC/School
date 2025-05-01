@@ -40,7 +40,7 @@ class LoginScreen extends StatelessWidget {
             children: [
               // Academy logo in center
               Image.asset(
-                'assets/logo.png', // Replace with your actual logo path
+                'lib/assest/logo.jpeg', // Replace with your actual logo path
                 height: 100,
               ),
               SizedBox(height: 32),
