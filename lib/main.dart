@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
-import 'routes.dart';
+// import 'routes.dart';
 // import 'package:academy_portal/LoginScreen.dart'; // <-- Add this line
 
 void main() async {
