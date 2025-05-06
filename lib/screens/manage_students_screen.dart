@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/student.dart';
 import '../services/database_service.dart';
+import 'package:uuid/uuid.dart';
 
 class ManageStudentsScreen extends StatefulWidget {
   const ManageStudentsScreen({super.key});
@@ -11,6 +12,7 @@ class ManageStudentsScreen extends StatefulWidget {
 
 class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   final DatabaseService _databaseService = DatabaseService();
+  final Uuid _uuid = const Uuid();
   List<Student> _students = [];
   bool _isLoading = true;
 
@@ -76,13 +78,13 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final student = Student(
-      id: _currentStudentId ?? '',
+      id: _isEditing ? _currentStudentId! : _uuid.v4(),
       name: _nameController.text,
-      classGrade: _classGradeController.text,
+      classGrade: _isClassStudent ? _classGradeController.text : null,
       rollNumber: _rollNumberController.text,
       phoneNumber: _phoneNumberController.text,
-      courseName: _courseNameController.text,
-      batchNumber: _batchNumberController.text,
+      courseName: !_isClassStudent ? _courseNameController.text : null,
+      batchNumber: !_isClassStudent ? _batchNumberController.text : null,
       isClassStudent: _isClassStudent,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),

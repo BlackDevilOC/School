@@ -1,0 +1,106 @@
+Restarted application in 617ms.
+supabase.supabase_flutter: INFO: ***** Supabase init completed *****
+Loaded 1 students from Supabase
+Loaded 0 attendance records for 2025-05-05
+Filtered to 1 students
+══╡ EXCEPTION CAUGHT BY RENDERING LIBRARY ╞═════════════════════════════════════════════════════════
+The following assertion was thrown during performLayout():
+BoxConstraints forces an infinite width.
+The offending constraints were:
+  BoxConstraints(w=Infinity, 0.0<=h<=Infinity)
+
+The relevant error-causing widget was:
+  SwitchListTile
+  SwitchListTile:file:///C:/Users/THE%20BOSS/Documents/rehan/School-Management-System-Flutter-App/School/lib/screens/student_attendance_screen.dart:252:23
+
+When the exception was thrown, this was the stack:
+dart-sdk/lib/_internal/js_dev_runtime/private/ddc_runtime/errors.dart 307:3     throw_
+packages/flutter/src/rendering/box.dart 548:9                                   throwError
+packages/flutter/src/rendering/box.dart 610:11                                  <fn>
+packages/flutter/src/rendering/box.dart 617:14                                  debugAssertIsValid
+packages/flutter/src/rendering/object.dart 2600:18                              layout
+packages/flutter/src/rendering/layout_helper.dart 62:10                         layoutChild
+packages/flutter/src/material/list_tile.dart 1533:64                            [_computeSizes]
+packages/flutter/src/material/list_tile.dart 1643:11                            performLayout
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/shifted_box.dart 243:5                           performLayout
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/shifted_box.dart 243:5                           performLayout
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/proxy_box.dart 115:10                            <fn>
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/proxy_box.dart 115:10                            <fn>
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/proxy_box.dart 115:10                            <fn>
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/proxy_box.dart 115:10                            <fn>
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/proxy_box.dart 115:10                            <fn>
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/proxy_box.dart 115:10                            <fn>
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/layout_helper.dart 62:10                         layoutChild
+packages/flutter/src/rendering/flex.dart 1161:28                                [_computeSizes]
+packages/flutter/src/rendering/flex.dart 1255:32                                performLayout
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/shifted_box.dart 243:5                           performLayout
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/layout_helper.dart 62:10                         layoutChild
+packages/flutter/src/rendering/flex.dart 1161:28                                [_computeSizes]
+packages/flutter/src/rendering/flex.dart 1255:32                                performLayout
+packages/flutter/src/rendering/object.dart 2715:7                               layout
+packages/flutter/src/rendering/custom_layout.dart 180:10                        layoutChild
+packages/flutter/src/material/scaffold.dart 1118:7                              performLayout
+packages/flutter/src/rendering/custom_layout.dart 249:7                         [_callPerformLayout]
+packages/flutter/src/rendering/custom_layout.dart 419:5                         performLayout
+packages/flutter/src/rendering/object.dart 2548:7                               [_layoutWithoutResize]
+packages/flutter/src/rendering/object.dart 1112:17                              flushLayout
+packages/flutter/src/rendering/object.dart 1125:14                              flushLayout
+packages/flutter/src/rendering/binding.dart 616:5                               drawFrame
+packages/flutter/src/widgets/binding.dart 1231:13                               drawFrame
+packages/flutter/src/rendering/binding.dart 482:5                               [_handlePersistentFrameCallback]
+packages/flutter/src/scheduler/binding.dart 1442:7                              [_invokeFrameCallback]
+packages/flutter/src/scheduler/binding.dart 1355:9                              handleDrawFrame
+packages/flutter/src/scheduler/binding.dart 1208:5                              [_handleDrawFrame]
+lib/_engine/engine/platform_dispatcher.dart 1347:5                              invoke
+lib/_engine/engine/platform_dispatcher.dart 301:5                               invokeOnDrawFrame
+lib/_engine/engine/initialization.dart 190:36                                   <fn>
+dart-sdk/lib/_internal/js_dev_runtime/patch/js_allow_interop_patch.dart 224:27  _callDartFunctionFast1
+
+The following RenderObject was being processed when the exception was fired: _RenderListTile#37655 relayoutBoundary=up12 NEEDS-LAYOUT NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE:
+  creator: _ListTile ← IconButtonTheme ← IconTheme ← Builder ← MediaQuery ← Padding ← SafeArea ←
+    Builder ← Padding-[GlobalKey#50b7c] ← Ink ← Semantics ← Listener ← ⋯
+  parentData: offset=Offset(0.0, 0.0) (can use size)
+  constraints: BoxConstraints(unconstrained)
+  size: MISSING
+This RenderObject had the following descendants (showing up to depth 5):
+    title: RenderParagraph#be6e7 NEEDS-LAYOUT NEEDS-PAINT
+      text: TextSpan
+    trailing: RenderSemanticsAnnotations#d8b3e relayoutBoundary=up13 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
+      child: RenderPointerListener#edccc relayoutBoundary=up14 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
+        child: RenderOpacity#9bbbe relayoutBoundary=up15 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
+          child: RenderMouseRegion#20058 relayoutBoundary=up16 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
+            child: RenderSemanticsAnnotations#22469 relayoutBoundary=up17 NEEDS-PAINT NEEDS-COMPOSITING-BITS-UPDATE
+════════════════════════════════════════════════════════════════════════════════════════════════════
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/box.dart:2251:12
+Another exception was thrown: Cannot hit test a render box with no size.
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/mouse_tracker.dart:203:12
+Another exception was thrown: Cannot hit test a render box with no size.
+Another exception was thrown: Cannot hit test a render box with no size.
+Another exception was thrown: Cannot hit test a render box with no size.
+Another exception was thrown: Cannot hit test a render box with no size.
+Another exception was thrown: Cannot hit test a render box with no size.
+Another exception was thrown: Assertion failed: file:///C:/dev/flutter/packages/flutter/lib/src/rendering/mouse_tracker.dart:203:12
+Another exception was thrown: Cannot hit test a render box with no size.

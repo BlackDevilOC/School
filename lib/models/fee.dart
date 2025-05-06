@@ -1,55 +1,84 @@
+import 'package:intl/intl.dart';
+
 class Fee {
   final String id;
+  final String studentId;
   final String studentName;
-  final String? classGrade; // Optional - only for class students
-  final String? courseName; // Optional - only for course students
-  final String? batchNumber; // Optional - only for course students
+  final String? classGrade;
+  final String? courseName;
   final double amount;
   final DateTime dueDate;
-  final bool isPaid;
-  final bool isClassStudent; // To determine if student is in class or course
+  final String status; // "Paid", "Pending", "Overdue"
+  final String month;
+  final int year;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   Fee({
     required this.id,
+    required this.studentId,
     required this.studentName,
     this.classGrade,
     this.courseName,
-    this.batchNumber,
     required this.amount,
     required this.dueDate,
-    this.isPaid = false,
-    required this.isClassStudent,
+    required this.status,
+    required this.month,
+    required this.year,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
-  // Factory constructor to create a Fee from a map
-  factory Fee.fromMap(Map<String, dynamic> map) {
+  // Create a Fee from a JSON object
+  factory Fee.fromJson(Map<String, dynamic> json) {
     return Fee(
-      id: map['id'] ?? '',
-      studentName: map['studentName'] ?? '',
-      classGrade: map['classGrade'],
-      courseName: map['courseName'],
-      batchNumber: map['batchNumber'],
-      amount: (map['amount'] ?? 0.0).toDouble(),
-      dueDate: map['dueDate'] != null
-          ? DateTime.parse(map['dueDate'])
-          : DateTime.now(),
-      isPaid: map['isPaid'] ?? false,
-      isClassStudent: map['isClassStudent'] ?? true,
+      id: json['id'],
+      studentId: json['student_id'],
+      studentName: json['student_name'] ?? '',
+      classGrade: json['class_grade'],
+      courseName: json['course_name'],
+      amount: (json['amount'] is int)
+          ? (json['amount'] as int).toDouble()
+          : json['amount'],
+      dueDate: DateTime.parse(json['due_date']),
+      status: json['status'],
+      month: json['month'],
+      year: json['year'],
+      createdAt: DateTime.parse(json['created_at']),
+      updatedAt: DateTime.parse(json['updated_at']),
     );
   }
 
-  // Method to convert Fee to a map
-  Map<String, dynamic> toMap() {
+  // Convert a Fee to a JSON object
+  Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'studentName': studentName,
-      'classGrade': classGrade,
-      'courseName': courseName,
-      'batchNumber': batchNumber,
+      'student_id': studentId,
+      'student_name': studentName,
+      'class_grade': classGrade,
+      'course_name': courseName,
       'amount': amount,
-      'dueDate': dueDate.toIso8601String(),
-      'isPaid': isPaid,
-      'isClassStudent': isClassStudent,
+      'due_date': dueDate.toIso8601String(),
+      'status': status,
+      'month': month,
+      'year': year,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
     };
+  }
+
+  // Format the due date as a string
+  String get formattedDueDate {
+    return DateFormat('MM/dd/yyyy').format(dueDate);
+  }
+
+  // Check if the fee is overdue
+  bool get isOverdue {
+    return status == 'Overdue';
+  }
+
+  // Check if the fee is paid
+  bool get isPaid {
+    return status == 'Paid';
   }
 }

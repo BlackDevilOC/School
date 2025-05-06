@@ -10,6 +10,7 @@ class Student {
   final bool isClassStudent; // To determine if student is in class or course
   final DateTime createdAt;
   final DateTime updatedAt;
+  final double feeAmount; // Added fee amount
 
   Student({
     required this.id,
@@ -23,6 +24,7 @@ class Student {
     required this.isClassStudent,
     required this.createdAt,
     required this.updatedAt,
+    this.feeAmount = 0.0, // Default value
   });
 
   // Factory constructor to create a Student from a map
@@ -39,6 +41,7 @@ class Student {
       isClassStudent: map['isClassStudent'] ?? true,
       createdAt: DateTime.parse(map['createdAt'] ?? ''),
       updatedAt: DateTime.parse(map['updatedAt'] ?? ''),
+      feeAmount: (map['feeAmount'] ?? 0.0).toDouble(),
     );
   }
 
@@ -56,6 +59,7 @@ class Student {
       'isClassStudent': isClassStudent,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'feeAmount': feeAmount,
     };
   }
 
@@ -71,6 +75,7 @@ class Student {
       isClassStudent: json['is_class_student'] as bool,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      feeAmount: json['fee_amount'] != null ? (json['fee_amount'] as num).toDouble() : 0.0,
     );
   }
 
@@ -86,6 +91,7 @@ class Student {
       'is_class_student': isClassStudent,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'fee_amount': feeAmount,
     };
   }
 }

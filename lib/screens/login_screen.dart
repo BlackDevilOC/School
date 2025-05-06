@@ -18,7 +18,7 @@ class LoginScreen extends StatelessWidget {
     } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Invalid username or password')));
+      ).showSnackBar(const SnackBar(content: Text('Invalid username or password')));
     }
   }
 
@@ -26,7 +26,7 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Dawn Essential Academy Rohri',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
@@ -43,34 +43,35 @@ class LoginScreen extends StatelessWidget {
                 'lib/assest/logo.jpeg', // Replace with your actual logo path
                 height: 100,
               ),
-              SizedBox(height: 32),
+              const SizedBox(height: 32),
               SizedBox(
                 width: 300, // Make input fields smaller
                 child: Column(
                   children: [
                     TextField(
                       controller: usernameController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Username',
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     TextField(
                       controller: passwordController,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: 'Password',
                         border: OutlineInputBorder(),
                       ),
                       obscureText: true,
                     ),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () => _login(context),
                       style: ElevatedButton.styleFrom(
-                        minimumSize: Size(double.infinity, 50),
+                        backgroundColor: Colors.green,
+                        minimumSize: const Size(double.infinity, 50),
                       ),
-                      child: Text('Login'),
+                      child: const Text('Login'),
                     ),
                   ],
                 ),

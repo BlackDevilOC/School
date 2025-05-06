@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'screens/login_screen.dart';
-// import 'routes.dart';
-// import 'package:academy_portal/LoginScreen.dart'; // <-- Add this line
+import 'routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
-    url: 'YOUR_SUPABASE_URL',
-    anonKey: 'YOUR_SUPABASE_ANON_KEY',
+    url: 'https://sxfbiywdpfmkucofnsbj.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4ZmJpeXdkcGZta3Vjb2Zuc2JqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzNzU2ODEsImV4cCI6MjA2MTk1MTY4MX0.8n9ncMDw5ymwmUwc7Bi1cJauO2tp3B1FPK9b7E9r-nI',
   );
 
   runApp(const MyApp());
@@ -26,7 +25,8 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         useMaterial3: true,
       ),
-      home: LoginScreen(),
+      initialRoute: Routes.login,
+      routes: Routes.getRoutes(),
     );
   }
 }

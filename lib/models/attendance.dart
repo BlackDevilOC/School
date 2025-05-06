@@ -3,8 +3,8 @@ class Attendance {
   final String studentId;
   final DateTime attendanceDate;
   final String status;
-  final int month;
-  final int year;
+  final int? month;  // Make month optional since it's generated in the database
+  final int? year;   // Make year optional since it's generated in the database
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -13,8 +13,8 @@ class Attendance {
     required this.studentId,
     required this.attendanceDate,
     required this.status,
-    required this.month,
-    required this.year,
+    this.month,  // Optional now
+    this.year,   // Optional now
     required this.createdAt,
     required this.updatedAt,
   });
@@ -33,15 +33,25 @@ class Attendance {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    // Create the base map without month and year
+    final Map<String, dynamic> json = {
       'id': id,
       'student_id': studentId,
       'attendance_date': attendanceDate.toIso8601String().split('T')[0],
       'status': status,
-      'month': month,
-      'year': year,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
+    
+    // Only include month and year if they're not null and we're updating an existing record
+    // This is to handle cases where we might be updating a record and need to include these fields
+    if (month != null) {
+      json['month'] = month;
+    }
+    if (year != null) {
+      json['year'] = year;
+    }
+    
+    return json;
   }
 }

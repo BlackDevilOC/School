@@ -17,14 +17,17 @@ class DataService {
       _fees.add(
         Fee(
           id: 'fee_${student['id']}',
+          studentId: student['id'],
           studentName: student['name'],
           classGrade: student['classGrade'],
           courseName: student['courseName'],
-          batchNumber: student['batchNumber'],
           amount: student['feeAmount'],
           dueDate: DateTime.parse(student['feeDueDate']),
-          isPaid: false, // Initially set all fees as unpaid
-          isClassStudent: student['isClassStudent'],
+          status: 'Pending', // Initially set all fees as pending
+          month: DateTime.now().month.toString(),
+          year: DateTime.now().year,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
         ),
       );
     }
