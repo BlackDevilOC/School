@@ -63,3 +63,66 @@ CREATE INDEX idx_fee_history_month_year ON fee_history(month, year);
 -- Indexes for current month fees table
 CREATE INDEX idx_current_month_fees_student_id ON current_month_fees(student_id);
 CREATE INDEX idx_current_month_fees_month_year ON current_month_fees(month, year);
+
+CREATE TABLE teachers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    subject VARCHAR(255),
+    qualification VARCHAR(255),
+    phone_number VARCHAR(20),
+    salary DECIMAL(10,2) DEFAULT 0.00,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE teacher_attendance (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    teacher_id UUID NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
+    attendance_date DATE NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('Present', 'Absent', 'Late', 'Excused')),
+    month INTEGER GENERATED ALWAYS AS (EXTRACT(MONTH FROM attendance_date)) STORED,
+    year INTEGER GENERATED ALWAYS AS (EXTRACT(YEAR FROM attendance_date)) STORED,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(teacher_id, attendance_date)
+);
+
+CREATE TABLE teacher_salary_history (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    teacher_id UUID NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_date DATE NOT NULL,
+    due_date DATE NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('Paid', 'Pending', 'Overdue')),
+    month INTEGER GENERATED ALWAYS AS (EXTRACT(MONTH FROM payment_date)) STORED,
+    year INTEGER GENERATED ALWAYS AS (EXTRACT(YEAR FROM payment_date)) STORED,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE current_month_salary (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    teacher_id UUID NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
+    amount DECIMAL(10,2) NOT NULL,
+    due_date DATE NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('Paid', 'Pending', 'Overdue')),
+    month INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(teacher_id, month, year)
+);
+
+-- Indexes for teacher attendance table
+CREATE INDEX idx_teacher_attendance_teacher_id ON teacher_attendance(teacher_id);
+CREATE INDEX idx_teacher_attendance_date ON teacher_attendance(attendance_date);
+CREATE INDEX idx_teacher_attendance_month_year ON teacher_attendance(month, year);
+
+-- Indexes for teacher salary history table
+CREATE INDEX idx_teacher_salary_history_teacher_id ON teacher_salary_history(teacher_id);
+CREATE INDEX idx_teacher_salary_history_payment_date ON teacher_salary_history(payment_date);
+CREATE INDEX idx_teacher_salary_history_month_year ON teacher_salary_history(month, year);
+
+-- Indexes for current month salary table
+CREATE INDEX idx_current_month_salary_teacher_id ON current_month_salary(teacher_id);
+CREATE INDEX idx_current_month_salary_month_year ON current_month_salary(month, year);
