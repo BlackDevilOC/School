@@ -8,6 +8,7 @@ import 'screens/teacher_attendance_screen.dart';
 import 'screens/manage_students_screen.dart';
 import 'screens/manage_teachers_screen.dart';
 import 'screens/fee_structure_screen.dart';
+import 'screens/fee_records_screen.dart';
 
 class Routes {
   static const String login = '/login';
@@ -19,6 +20,7 @@ class Routes {
   static const String manageStudents = '/manage_students';
   static const String manageTeachers = '/manage_teachers';
   static const String feeStructure = '/fee_structure';
+  static const String feeRecords = '/fee_records';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return {
@@ -31,6 +33,7 @@ class Routes {
       manageStudents: (context) => ManageStudentsScreen(),
       manageTeachers: (context) => ManageTeachersScreen(),
       feeStructure: (context) => FeeStructureScreen(),
+      feeRecords: (context) => FeeRecordsScreen(),
     };
   }
 }

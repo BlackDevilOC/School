@@ -62,6 +62,13 @@ class _FeeStructureScreenState extends State<FeeStructureScreen> {
     setState(() => _isLoading = true);
     
     try {
+      // First, ensure all students have current month fee entries
+      await _databaseService.generateCurrentMonthFees();
+      
+      // Update any overdue fees
+      await _databaseService.updateOverdueFees();
+      
+      // Now fetch the current month fees
       final fees = await _databaseService.getCurrentMonthFees();
       
       setState(() {

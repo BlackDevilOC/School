@@ -42,8 +42,10 @@ class Fee {
           : json['amount'],
       dueDate: DateTime.parse(json['due_date']),
       status: json['status'],
-      month: json['month'],
-      year: json['year'],
+      month: json['month'].toString(), // Convert month to String
+      year: json['year'] is String 
+          ? int.parse(json['year']) 
+          : json['year'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
     );

@@ -106,6 +106,9 @@ class _StudentRecordScreenState extends State<StudentRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Determine if we're on a mobile or web layout based on screen width
+    final isWebLayout = MediaQuery.of(context).size.width > 800;
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -140,7 +143,7 @@ class _StudentRecordScreenState extends State<StudentRecordScreen> {
                     Card(
                       elevation: 4,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
@@ -154,23 +157,29 @@ class _StudentRecordScreenState extends State<StudentRecordScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 12),
+                            SizedBox(height: 16),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
                                 _buildAttendanceCounter(
                                   'Present',
-                                  _attendanceRecords.where((a) => a.status == 'Present').length,
+                                  _attendanceRecords
+                                      .where((a) => a.status == 'Present')
+                                      .length,
                                   Colors.green,
                                 ),
                                 _buildAttendanceCounter(
                                   'Absent',
-                                  _attendanceRecords.where((a) => a.status == 'Absent').length,
+                                  _attendanceRecords
+                                      .where((a) => a.status == 'Absent')
+                                      .length,
                                   Colors.red,
                                 ),
                                 _buildAttendanceCounter(
                                   'Leave',
-                                  _attendanceRecords.where((a) => a.status == 'Excused').length,
+                                  _attendanceRecords
+                                      .where((a) => a.status == 'Excused')
+                                      .length,
                                   Colors.blue,
                                 ),
                               ],
@@ -179,82 +188,405 @@ class _StudentRecordScreenState extends State<StudentRecordScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 20),
-                    Text(
-                      'Student Management',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
                     SizedBox(height: 24),
                     Expanded(
-                      child: GridView.count(
-                        crossAxisCount:
-                            MediaQuery.of(context).size.width > 600 ? 3 : 2,
-                        childAspectRatio: 1.2,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        children: [
-                          _buildActionCard(
-                            context,
-                            'Attendance',
-                            Icons.fact_check_outlined,
-                            Colors.blue.shade50,
-                            Colors.blue.shade700,
-                            () {
-                              Navigator.pushNamed(context, Routes.studentAttendance);
-                            },
-                          ),
-                          _buildActionCard(
-                            context,
-                            'Manage Students',
-                            Icons.groups_outlined,
-                            Colors.green.shade50,
-                            Colors.green.shade700,
-                            () {
-                              Navigator.pushNamed(context, Routes.manageStudents);
-                            },
-                          ),
-                          _buildActionCard(
-                            context,
-                            'Monthly Reports',
-                            Icons.assessment_outlined,
-                            Colors.purple.shade50,
-                            Colors.purple.shade700,
-                            () {
-                              _showMonthlyReports(context);
-                            },
-                          ),
-                          _buildActionCard(
-                            context,
-                            'Fees Structure',
-                            Icons.account_balance_wallet_outlined,
-                            Colors.amber.shade50,
-                            Colors.amber.shade700,
-                            () {
-                              Navigator.pushNamed(context, Routes.feeStructure);
-                            },
-                          ),
-                          _buildActionCard(
-                            context,
-                            'Attendance Records',
-                            Icons.calendar_today_outlined,
-                            Colors.teal.shade50,
-                            Colors.teal.shade700,
-                            () {
-                              _showAttendanceDetails(context);
-                            },
-                          ),
-                        ],
-                      ),
+                      child: isWebLayout
+                          ? _buildWebLayout(context)
+                          : _buildMobileLayout(context),
                     ),
                   ],
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildWebLayout(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Left side - Action cards in a grid
+        Expanded(
+          flex: 2,
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Student Management",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Expanded(
+                    child: GridView.count(
+                      crossAxisCount: 2,
+                      childAspectRatio: 1.2,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      children: [
+                        _buildActionCard(
+                          context,
+                          'Manage Students',
+                          Icons.edit,
+                          Colors.blue.withOpacity(0.1),
+                          Colors.blue,
+                          () => Navigator.pushNamed(context, Routes.manageStudents),
+                        ),
+                        _buildActionCard(
+                          context,
+                          'Attendance',
+                          Icons.calendar_today,
+                          Colors.orange.withOpacity(0.1),
+                          Colors.orange,
+                          () => Navigator.pushNamed(context, Routes.studentAttendance),
+                        ),
+                        _buildActionCard(
+                          context,
+                          'Fee Structure',
+                          Icons.attach_money,
+                          Colors.green.withOpacity(0.1),
+                          Colors.green,
+                          () => Navigator.pushNamed(context, Routes.feeStructure),
+                        ),
+                        _buildActionCard(
+                          context,
+                          'Fee Records',
+                          Icons.receipt_long,
+                          Colors.purple.withOpacity(0.1),
+                          Colors.purple,
+                          () => Navigator.pushNamed(context, Routes.feeRecords),
+                        ),
+                        _buildActionCard(
+                          context,
+                          'Monthly Reports',
+                          Icons.bar_chart,
+                          Colors.red.withOpacity(0.1),
+                          Colors.red,
+                          () => _showMonthlyReports(context),
+                        ),
+                        _buildActionCard(
+                          context,
+                          'Attendance Records',
+                          Icons.calendar_today_outlined,
+                          Colors.teal.withOpacity(0.1),
+                          Colors.teal,
+                          () => _showAttendanceDetails(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: 16),
+        // Right side - Student attendance summary
+        Expanded(
+          flex: 3,
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Student Attendance Summary",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _students.length,
+                      itemBuilder: (context, index) {
+                        final student = _students[index];
+                        final stats = _attendanceStats[student.id] ?? {
+                          'present': 0,
+                          'absent': 0,
+                          'excused': 0,
+                          'total': 0,
+                        };
+                        
+                        // Calculate attendance percentage
+                        final total = stats['total'] ?? 0;
+                        final present = stats['present'] ?? 0;
+                        final percentage = total > 0 
+                            ? (present / total * 100).toStringAsFixed(1) 
+                            : '0.0';
+                        
+                        return Card(
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  student.name,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Text(
+                                  student.isClassStudent
+                                      ? 'Class: ${student.classGrade}'
+                                      : 'Course: ${student.courseName}',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    _buildStatItem('Present', stats['present'] ?? 0, Colors.green),
+                                    _buildStatItem('Absent', stats['absent'] ?? 0, Colors.red),
+                                    _buildStatItem('Leave', stats['excused'] ?? 0, Colors.blue),
+                                    Column(
+                                      children: [
+                                        Text(
+                                          '$percentage%',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: double.parse(percentage) >= 75 
+                                                ? Colors.green 
+                                                : Colors.red,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Attendance',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
+    return Column(
+      children: [
+        // Action Cards - 2x3 grid
+        Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Student Management",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16),
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  children: [
+                    _buildActionCard(
+                      context,
+                      'Manage Students',
+                      Icons.edit,
+                      Colors.blue.withOpacity(0.1),
+                      Colors.blue,
+                      () => Navigator.pushNamed(context, Routes.manageStudents),
+                    ),
+                    _buildActionCard(
+                      context,
+                      'Attendance',
+                      Icons.calendar_today,
+                      Colors.orange.withOpacity(0.1),
+                      Colors.orange,
+                      () => Navigator.pushNamed(context, Routes.studentAttendance),
+                    ),
+                    _buildActionCard(
+                      context,
+                      'Fee Structure',
+                      Icons.attach_money,
+                      Colors.green.withOpacity(0.1),
+                      Colors.green,
+                      () => Navigator.pushNamed(context, Routes.feeStructure),
+                    ),
+                    _buildActionCard(
+                      context,
+                      'Fee Records',
+                      Icons.receipt_long,
+                      Colors.purple.withOpacity(0.1),
+                      Colors.purple,
+                      () => Navigator.pushNamed(context, Routes.feeRecords),
+                    ),
+                    _buildActionCard(
+                      context,
+                      'Monthly Reports',
+                      Icons.bar_chart,
+                      Colors.red.withOpacity(0.1),
+                      Colors.red,
+                      () => _showMonthlyReports(context),
+                    ),
+                    _buildActionCard(
+                      context,
+                      'Attendance Records',
+                      Icons.calendar_today_outlined,
+                      Colors.teal.withOpacity(0.1),
+                      Colors.teal,
+                      () => _showAttendanceDetails(context),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 16),
+        // Student Attendance Summary
+        Expanded(
+          child: Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Student Attendance Summary",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _students.length,
+                      itemBuilder: (context, index) {
+                        final student = _students[index];
+                        final stats = _attendanceStats[student.id] ?? {
+                          'present': 0,
+                          'absent': 0,
+                          'excused': 0,
+                          'total': 0,
+                        };
+                        
+                        // Calculate attendance percentage
+                        final total = stats['total'] ?? 0;
+                        final present = stats['present'] ?? 0;
+                        final percentage = total > 0 
+                            ? (present / total * 100).toStringAsFixed(1) 
+                            : '0.0';
+                        
+                        return Card(
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  student.name,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Text(
+                                  student.isClassStudent
+                                      ? 'Class: ${student.classGrade}'
+                                      : 'Course: ${student.courseName}',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    _buildStatItem('Present', stats['present'] ?? 0, Colors.green),
+                                    _buildStatItem('Absent', stats['absent'] ?? 0, Colors.red),
+                                    _buildStatItem('Leave', stats['excused'] ?? 0, Colors.blue),
+                                    Column(
+                                      children: [
+                                        Text(
+                                          '$percentage%',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                            color: double.parse(percentage) >= 75 
+                                                ? Colors.green 
+                                                : Colors.red,
+                                          ),
+                                        ),
+                                        Text(
+                                          'Attendance',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

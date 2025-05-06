@@ -23,6 +23,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _courseNameController = TextEditingController();
   final TextEditingController _batchNumberController = TextEditingController();
+  final TextEditingController _feeAmountController = TextEditingController();
 
   String? _currentStudentId;
   bool _isEditing = false;
@@ -58,6 +59,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
     _phoneNumberController.dispose();
     _courseNameController.dispose();
     _batchNumberController.dispose();
+    _feeAmountController.dispose();
     super.dispose();
   }
 
@@ -69,6 +71,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
     _phoneNumberController.clear();
     _courseNameController.clear();
     _batchNumberController.clear();
+    _feeAmountController.clear();
     _currentStudentId = null;
     _isEditing = false;
     setState(() => _isClassStudent = true);
@@ -86,6 +89,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
       courseName: !_isClassStudent ? _courseNameController.text : null,
       batchNumber: !_isClassStudent ? _batchNumberController.text : null,
       isClassStudent: _isClassStudent,
+      feeAmount: double.tryParse(_feeAmountController.text) ?? 0.0,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -126,8 +130,9 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
       _phoneNumberController.text = student.phoneNumber;
       _courseNameController.text = student.courseName ?? '';
       _batchNumberController.text = student.batchNumber ?? '';
+      _feeAmountController.text = student.feeAmount.toString();
       _isEditing = true;
-      _isClassStudent = student.isClassStudent;
+      setState(() => _isClassStudent = student.isClassStudent);
     } else {
       _resetForm();
     }
@@ -136,40 +141,58 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) => StatefulBuilder(
-        builder: (BuildContext context, StateSetter setModalState) {
-          return SingleChildScrollView(
+        builder: (context, setState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
             child: Container(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-                top: 16,
-                left: 16,
-                right: 16,
-              ),
+              padding: const EdgeInsets.all(16),
               child: Form(
                 key: _formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
                       _isEditing ? 'Edit Student' : 'Add New Student',
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(labelText: 'Name'),
                       validator: (value) =>
-                          value?.isEmpty ?? true ? 'Please enter a name' : null,
+                          value?.isEmpty ?? true ? 'Please enter name' : null,
                     ),
                     const SizedBox(height: 8),
-                    SwitchListTile(
-                      title: const Text('Class Student'),
-                      value: _isClassStudent,
-                      onChanged: (value) {
-                        setModalState(() => _isClassStudent = value);
-                      },
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<bool>(
+                            title: const Text('Class Student'),
+                            value: true,
+                            groupValue: _isClassStudent,
+                            onChanged: (value) {
+                              setState(() => _isClassStudent = value!);
+                            },
+                          ),
+                        ),
+                        Expanded(
+                          child: RadioListTile<bool>(
+                            title: const Text('Course Student'),
+                            value: false,
+                            groupValue: _isClassStudent,
+                            onChanged: (value) {
+                              setState(() => _isClassStudent = value!);
+                            },
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 8),
                     if (_isClassStudent) ...[
                       TextFormField(
                         controller: _classGradeController,
@@ -218,6 +241,24 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
                       validator: (value) => value?.isEmpty ?? true
                           ? 'Please enter phone number'
                           : null,
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _feeAmountController,
+                      decoration: const InputDecoration(
+                        labelText: 'Fee Amount',
+                        prefixText: '\$',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) {
+                          return 'Please enter fee amount';
+                        }
+                        if (double.tryParse(value!) == null) {
+                          return 'Please enter a valid number';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
