@@ -64,6 +64,8 @@ CREATE INDEX idx_fee_history_month_year ON fee_history(month, year);
 CREATE INDEX idx_current_month_fees_student_id ON current_month_fees(student_id);
 CREATE INDEX idx_current_month_fees_month_year ON current_month_fees(month, year);
 
+
+
 CREATE TABLE teachers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,

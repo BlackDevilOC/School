@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/database_service.dart';
-import '../models/teacher.dart';
-import '../models/teacher_salary.dart';
+import '../services/data_service.dart';
 
 class TeacherSalaryScreen extends StatefulWidget {
   const TeacherSalaryScreen({super.key});
@@ -11,7 +9,7 @@ class TeacherSalaryScreen extends StatefulWidget {
 }
 
 class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
-  final DatabaseService _databaseService = DatabaseService();
+  final DataService _dataService = DataService();
   final _formKey = GlobalKey<FormState>();
   bool _isDarkMode = false;
   String? _sortColumn;
@@ -26,10 +24,8 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
   final TextEditingController _paymentDateController = TextEditingController();
   DateTime? _selectedPaymentDate;
 
-  late List<Teacher> teachers = [];
-  late List<Teacher> filteredTeachers = [];
-  late List<TeacherSalary> currentMonthSalaries = [];
-  bool _isLoading = true;
+  late List<Map<String, dynamic>> teachers;
+  late List<Map<String, dynamic>> filteredTeachers;
 
   @override
   void initState() {
@@ -48,37 +44,21 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
     super.dispose();
   }
 
-  Future<void> _loadTeachers() async {
-    setState(() => _isLoading = true);
-    try {
-      final teachersList = await _databaseService.getTeachers();
-      
-      // Also fetch the current month salaries to get payment status
-      final salariesList = await _databaseService.getCurrentMonthSalaries();
-      
-      setState(() {
-        teachers = teachersList;
-        currentMonthSalaries = salariesList;
-        _filterTeachers();
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading teachers: $e')),
-        );
-      }
-    }
+  void _loadTeachers() {
+    setState(() {
+      teachers = _dataService.teachers;
+      _filterTeachers();
+    });
   }
 
   void _filterTeachers() {
     final searchQuery = _searchController.text.toLowerCase();
     setState(() {
-      filteredTeachers = teachers.where((teacher) {
-        return teacher.name.toLowerCase().contains(searchQuery) ||
-            teacher.subject.toLowerCase().contains(searchQuery);
-      }).toList();
+      filteredTeachers =
+          teachers.where((teacher) {
+            return teacher['name'].toLowerCase().contains(searchQuery) ||
+                teacher['subject'].toLowerCase().contains(searchQuery);
+          }).toList();
 
       if (_sortColumn != null) {
         _sortTeachers(_sortColumn!, _sortAscending);
@@ -97,16 +77,20 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
 
         switch (column) {
           case 'name':
-            aValue = a.name;
-            bValue = b.name;
+            aValue = a['name'];
+            bValue = b['name'];
             break;
           case 'subject':
-            aValue = a.subject;
-            bValue = b.subject;
+            aValue = a['subject'];
+            bValue = b['subject'];
             break;
           case 'salary':
-            aValue = a.salary;
-            bValue = b.salary;
+            aValue = a['salary'] ?? 0.0;
+            bValue = b['salary'] ?? 0.0;
+            break;
+          case 'status':
+            aValue = a['isPaid'] ?? false;
+            bValue = b['isPaid'] ?? false;
             break;
           default:
             return 0;
@@ -122,6 +106,8 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
           return aValue.compareTo(bValue);
         } else if (aValue is num) {
           return aValue.compareTo(bValue);
+        } else if (aValue is bool) {
+          return aValue == bValue ? 0 : (aValue ? 1 : -1);
         }
         return 0;
       });
@@ -144,57 +130,24 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
     }
   }
 
-  Future<void> _togglePaymentStatus(Teacher teacher) async {
-    try {
-      // Create a new teacher with updated salary status
-      final now = DateTime.now();
-      
-      // Get current month salary for this teacher
-      final salaries = await _databaseService.getCurrentMonthSalaries();
-      final teacherSalary = salaries.firstWhere(
-        (s) => s.teacherId == teacher.id && s.month == now.month && s.year == now.year,
-        orElse: () => TeacherSalary(
-          id: '',
-          teacherId: teacher.id,
-          amount: teacher.salary,
-          dueDate: DateTime.now().add(const Duration(days: 30)),
-          paymentDate: DateTime.now(),
-          status: 'Pending',
-          month: now.month,
-          year: now.year,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
+  void _togglePaymentStatus(Map<String, dynamic> teacher) {
+    final updatedTeacher = Map<String, dynamic>.from(teacher);
+    updatedTeacher['isPaid'] = !(teacher['isPaid'] ?? false);
+
+    _dataService.updateTeacher(teacher['id'], updatedTeacher);
+    _loadTeachers();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          updatedTeacher['isPaid']
+              ? 'Salary marked as Paid'
+              : 'Salary marked as Pending',
         ),
-      );
-      
-      if (teacherSalary.id.isNotEmpty) {
-        // Toggle status between Paid and Pending
-        final newStatus = teacherSalary.status == 'Paid' ? 'Pending' : 'Paid';
-        await _databaseService.updateSalaryStatus(teacherSalary.id, newStatus);
-      }
-      
-      await _loadTeachers();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              teacherSalary.status == 'Paid'
-                  ? 'Salary marked as Pending'
-                  : 'Salary marked as Paid',
-            ),
-            backgroundColor:
-                teacherSalary.status == 'Paid' ? Colors.orange : Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating payment status: $e')),
-        );
-      }
-    }
+        backgroundColor:
+            updatedTeacher['isPaid'] ? Colors.green : Colors.orange,
+      ),
+    );
   }
 
   @override
@@ -222,11 +175,9 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
             ),
           ],
         ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [_buildSearchBar(), Expanded(child: _buildSalaryTable())],
-              ),
+        body: Column(
+          children: [_buildSearchBar(), Expanded(child: _buildSalaryTable())],
+        ),
         floatingActionButton: FloatingActionButton(
           onPressed: () => _showAddEditSalaryDialog(),
           backgroundColor: Colors.green,
@@ -242,10 +193,10 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
       padding: const EdgeInsets.all(16.0),
       child: TextField(
         controller: _searchController,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           labelText: 'Search',
-          prefixIcon: Icon(Icons.search),
-          border: OutlineInputBorder(),
+          prefixIcon: const Icon(Icons.search),
+          border: const OutlineInputBorder(),
         ),
         onChanged: (_) => _filterTeachers(),
       ),
@@ -254,7 +205,7 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
 
   Widget _buildSalaryTable() {
     if (teachers.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No teachers found.\nAdd teachers from the Manage Teachers page first.',
           textAlign: TextAlign.center,
@@ -262,8 +213,6 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
         ),
       );
     }
-
-    final now = DateTime.now();
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -285,65 +234,63 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
             onSort:
                 (columnIndex, ascending) => _sortTeachers('salary', ascending),
           ),
-          const DataColumn(label: Text('Payment Date')),
-          const DataColumn(label: Text('Status')),
+          DataColumn(label: const Text('Payment Date')),
+          DataColumn(
+            label: const Text('Status'),
+            onSort:
+                (columnIndex, ascending) => _sortTeachers('status', ascending),
+          ),
         ],
-        rows: filteredTeachers.map((teacher) {
-          // Find the salary record for this teacher
-          final teacherSalary = currentMonthSalaries.firstWhere(
-            (s) => s.teacherId == teacher.id && s.month == now.month && s.year == now.year,
-            orElse: () => TeacherSalary(
-              id: '',
-              teacherId: teacher.id,
-              amount: teacher.salary,
-              dueDate: now.add(const Duration(days: 30)),
-              paymentDate: now,
-              status: 'Pending',
-              month: now.month,
-              year: now.year,
-              createdAt: now,
-              updatedAt: now,
-            ),
-          );
-          
-          // Set the status based on the database record
-          bool isPaid = teacherSalary.status == 'Paid';
-          DateTime paymentDate = teacherSalary.paymentDate;
-          bool isOverdue = !isPaid && teacherSalary.dueDate.isBefore(now);
-          
-          return DataRow(
-            cells: [
-              DataCell(Text(teacher.name)),
-              DataCell(Text(teacher.subject)),
-              DataCell(
-                Text('\$${teacher.salary.toStringAsFixed(2)}'),
-              ),
-              DataCell(
-                Text(
-                  '${paymentDate.day}/${paymentDate.month}/${paymentDate.year}',
-                  style: isOverdue
-                      ? const TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        )
-                      : null,
-                ),
-              ),
-              DataCell(
-                Builder(
-                  builder: (context) {
-                    return InkWell(
+        rows:
+            filteredTeachers.map((teacher) {
+              final bool isPaid = teacher['isPaid'] ?? false;
+              final DateTime paymentDate =
+                  teacher['paymentDate'] ?? DateTime.now();
+              final bool isOverdue =
+                  !isPaid && paymentDate.isBefore(DateTime.now());
+
+              return DataRow(
+                cells: [
+                  DataCell(Text(teacher['name'])),
+                  DataCell(Text(teacher['subject'])),
+                  DataCell(
+                    Text('\$${(teacher['salary'] ?? 0.0).toStringAsFixed(2)}'),
+                  ),
+                  DataCell(
+                    Text(
+                      '${paymentDate.day}/${paymentDate.month}/${paymentDate.year}',
+                      style:
+                          isOverdue
+                              ? TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                              )
+                              : null,
+                    ),
+                  ),
+                  DataCell(
+                    GestureDetector(
                       onTap: () => _togglePaymentStatus(teacher),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(isPaid, isOverdue).withOpacity(0.1),
+                          color:
+                              isPaid
+                                  ? Colors.green.withOpacity(0.1)
+                                  : isOverdue
+                                  ? Colors.red.withOpacity(0.1)
+                                  : Colors.orange.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: _getStatusColor(isPaid, isOverdue),
+                            color:
+                                isPaid
+                                    ? Colors.green
+                                    : isOverdue
+                                    ? Colors.red
+                                    : Colors.orange,
                             width: 1,
                           ),
                         ),
@@ -351,58 +298,55 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              _getStatusIcon(isPaid, isOverdue),
-                              color: _getStatusColor(isPaid, isOverdue),
+                              isPaid
+                                  ? Icons.check_circle
+                                  : isOverdue
+                                  ? Icons.warning
+                                  : Icons.pending,
+                              color:
+                                  isPaid
+                                      ? Colors.green
+                                      : isOverdue
+                                      ? Colors.red
+                                      : Colors.orange,
                               size: 16,
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
-                              _getStatusText(isPaid, isOverdue),
+                              isPaid
+                                  ? 'Paid'
+                                  : isOverdue
+                                  ? 'Overdue'
+                                  : 'Pending',
                               style: TextStyle(
-                                color: _getStatusColor(isPaid, isOverdue),
+                                color:
+                                    isPaid
+                                        ? Colors.green
+                                        : isOverdue
+                                        ? Colors.red
+                                        : Colors.orange,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    );
-                  }
-                ),
-              ),
-            ],
-          );
-        }).toList(),
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
       ),
     );
   }
 
-  // Helper methods to avoid nested ternary operators
-  Color _getStatusColor(bool isPaid, bool isOverdue) {
-    if (isPaid) return Colors.green;
-    if (isOverdue) return Colors.red;
-    return Colors.orange;
-  }
-
-  IconData _getStatusIcon(bool isPaid, bool isOverdue) {
-    if (isPaid) return Icons.check_circle;
-    if (isOverdue) return Icons.warning;
-    return Icons.pending;
-  }
-
-  String _getStatusText(bool isPaid, bool isOverdue) {
-    if (isPaid) return 'Paid';
-    if (isOverdue) return 'Overdue';
-    return 'Pending';
-  }
-
-  void _showAddEditSalaryDialog([Teacher? existingTeacher]) {
-    if (existingTeacher != null) {
-      _nameController.text = existingTeacher.name;
-      _subjectController.text = existingTeacher.subject;
-      _phoneNumberController.text = existingTeacher.phoneNumber;
-      _salaryController.text = existingTeacher.salary.toString();
-      _selectedPaymentDate = DateTime.now();
+  void _showAddEditSalaryDialog([Map<String, dynamic>? teacher]) {
+    if (teacher != null) {
+      _nameController.text = teacher['name'];
+      _subjectController.text = teacher['subject'];
+      _phoneNumberController.text = teacher['phoneNumber'];
+      _salaryController.text = (teacher['salary'] ?? 0.0).toString();
+      _selectedPaymentDate = teacher['paymentDate'] ?? DateTime.now();
       _paymentDateController.text =
           '${_selectedPaymentDate!.day}/${_selectedPaymentDate!.month}/${_selectedPaymentDate!.year}';
     } else {
@@ -416,137 +360,111 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          existingTeacher == null ? 'Add Salary Record' : 'Edit Salary Record',
-        ),
-        content: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Teacher Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) =>
-                      value?.isEmpty == true ? 'Required field' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _subjectController,
-                  decoration: const InputDecoration(
-                    labelText: 'Subject',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) =>
-                      value?.isEmpty == true ? 'Required field' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) =>
-                      value?.isEmpty == true ? 'Required field' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _salaryController,
-                  decoration: const InputDecoration(
-                    labelText: 'Salary Amount',
-                    border: OutlineInputBorder(),
-                    prefixText: '\$',
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value?.isEmpty == true) return 'Required field';
-                    if (double.tryParse(value!) == null)
-                      return 'Enter valid amount';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _paymentDateController,
-                  decoration: const InputDecoration(
-                    labelText: 'Payment Date',
-                    border: OutlineInputBorder(),
-                  ),
-                  readOnly: true,
-                  onTap: () => _selectDate(context),
-                  validator: (value) =>
-                      value?.isEmpty == true ? 'Required field' : null,
-                ),
-              ],
+      builder:
+          (context) => AlertDialog(
+            title: Text(
+              teacher == null ? 'Add Salary Record' : 'Edit Salary Record',
             ),
+            content: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Teacher Name',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator:
+                          (value) =>
+                              value?.isEmpty == true ? 'Required field' : null,
+                    ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _salaryController,
+                      decoration: const InputDecoration(
+                        labelText: 'Salary Amount',
+                        border: OutlineInputBorder(),
+                        prefixText: '\$',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value?.isEmpty == true) return 'Required field';
+                        if (double.tryParse(value!) == null)
+                          return 'Enter valid amount';
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _paymentDateController,
+                      decoration: const InputDecoration(
+                        labelText: 'Payment Date',
+                        border: OutlineInputBorder(),
+                      ),
+                      readOnly: true,
+                      onTap: () => _selectDate(context),
+                      validator:
+                          (value) =>
+                              value?.isEmpty == true ? 'Required field' : null,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => _saveSalary(teacher),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                child: Text(teacher == null ? 'Add' : 'Update'),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => _saveSalary(existingTeacher),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: Text(existingTeacher == null ? 'Add' : 'Update'),
-          ),
-        ],
-      ),
     );
   }
 
-  Future<void> _saveSalary(Teacher? existingTeacher) async {
+  void _saveSalary(Map<String, dynamic>? existingTeacher) {
     if (_formKey.currentState?.validate() == true &&
         _selectedPaymentDate != null) {
-      try {
-        final now = DateTime.now();
-        
-        // Create or update teacher
-        final teacher = Teacher(
-          id: existingTeacher?.id ?? '',
-          name: _nameController.text,
-          subject: _subjectController.text,
-          phoneNumber: _phoneNumberController.text,
-          salary: double.parse(_salaryController.text),
-          createdAt: existingTeacher?.createdAt ?? now,
-          updatedAt: now,
-        );
+      final updatedTeacher =
+          existingTeacher != null
+              ? Map<String, dynamic>.from(existingTeacher)
+              : {
+                'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                'name': _nameController.text,
+                'subject': _subjectController.text,
+                'phoneNumber': _phoneNumberController.text,
+              };
 
-        if (existingTeacher != null) {
-          await _databaseService.updateTeacher(teacher);
-        } else {
-          await _databaseService.addTeacher(teacher);
-        }
+      updatedTeacher['salary'] = double.parse(_salaryController.text);
+      updatedTeacher['paymentDate'] = _selectedPaymentDate;
+      updatedTeacher['isPaid'] = existingTeacher?['isPaid'] ?? false;
 
-        await _loadTeachers();
-        
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                existingTeacher == null
-                    ? 'Teacher added successfully'
-                    : 'Teacher updated successfully',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error saving teacher: $e')),
-          );
-        }
+      if (existingTeacher != null) {
+        _dataService.updateTeacher(existingTeacher['id'], updatedTeacher);
+      } else {
+        _dataService.addTeacher(updatedTeacher);
       }
+
+      _loadTeachers();
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            existingTeacher == null
+                ? 'Salary record added successfully'
+                : 'Salary record updated successfully',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
     }
   }
 }
