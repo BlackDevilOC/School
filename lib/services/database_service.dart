@@ -1,10 +1,58 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/student.dart';
+import '../models/teacher.dart';
 import '../models/attendance.dart';
+import '../models/teacher_attendance.dart';
 import '../models/fee.dart';
+import '../models/teacher_salary.dart';
 
 class DatabaseService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  
+  // Teacher operations
+  Future<List<Teacher>> getTeachers() async {
+    final response = await _supabase
+        .from('teachers')
+        .select()
+        .order('created_at', ascending: false);
+
+    return (response as List).map((json) => Teacher.fromJson(json)).toList();
+  }
+
+  Future<Teacher> addTeacher(Teacher teacher) async {
+    try {
+      final response = await _supabase
+          .from('teachers')
+          .insert(teacher.toJson())
+          .select()
+          .single();
+      
+      return Teacher.fromJson(response);
+    } catch (e) {
+      print('Error adding teacher: $e');
+      rethrow;
+    }
+  }
+
+  Future<Teacher> updateTeacher(Teacher teacher) async {
+    try {
+      final response = await _supabase
+          .from('teachers')
+          .update(teacher.toJson())
+          .eq('id', teacher.id)
+          .select()
+          .single();
+      
+      return Teacher.fromJson(response);
+    } catch (e) {
+      print('Error updating teacher: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteTeacher(String id) async {
+    await _supabase.from('teachers').delete().eq('id', id);
+  }
 
   // Student operations
   Future<List<Student>> getStudents() async {
@@ -117,6 +165,62 @@ class DatabaseService {
         .order('attendance_date', ascending: false);
 
     return (response as List).map((json) => Attendance.fromJson(json)).toList();
+  }
+  
+  // Teacher Attendance operations
+  Future<List<TeacherAttendance>> getTeacherAttendanceForDate(DateTime date) async {
+    final response = await _supabase
+        .from('teacher_attendance')
+        .select()
+        .eq('attendance_date', date.toIso8601String().split('T')[0])
+        .order('created_at', ascending: false);
+
+    return (response as List).map((json) => TeacherAttendance.fromJson(json)).toList();
+  }
+
+  Future<TeacherAttendance> addTeacherAttendance(TeacherAttendance attendance) async {
+    final response =
+        await _supabase
+            .from('teacher_attendance')
+            .insert(attendance.toJson())
+            .select()
+            .single();
+
+    return TeacherAttendance.fromJson(response);
+  }
+
+  Future<TeacherAttendance> updateTeacherAttendance(TeacherAttendance attendance) async {
+    // Create a map without month and year fields for update
+    final Map<String, dynamic> updateData = {
+      'teacher_id': attendance.teacherId,
+      'attendance_date': attendance.attendanceDate.toIso8601String().split('T')[0],
+      'status': attendance.status,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+
+    final response =
+        await _supabase
+            .from('teacher_attendance')
+            .update(updateData)
+            .eq('id', attendance.id)
+            .select()
+            .single();
+
+    return TeacherAttendance.fromJson(response);
+  }
+
+  Future<void> deleteTeacherAttendance(String id) async {
+    await _supabase.from('teacher_attendance').delete().eq('id', id);
+  }
+
+  Future<List<TeacherAttendance>> getTeacherAttendance(String teacherId) async {
+    final response = await _supabase
+        .from('teacher_attendance')
+        .select()
+        .eq('teacher_id', teacherId)
+        .order('attendance_date', ascending: false);
+
+    return (response as List).map((json) => TeacherAttendance.fromJson(json)).toList();
   }
 
   // Fee operations
@@ -376,6 +480,356 @@ class DatabaseService {
       }
     } catch (e) {
       print('Error updating overdue fees: $e');
+    }
+  }
+  
+  // Teacher Salary operations
+  Future<List<TeacherSalary>> getCurrentMonthTeacherSalaries() async {
+    try {
+      final now = DateTime.now();
+      final currentMonth = now.month;
+      final currentYear = now.year;
+      
+      // Try to create the table if it doesn't exist
+      try {
+        // First check if the table exists by trying to select from it
+        await _supabase.from('teacher_salary_payments').select().limit(1);
+      } catch (e) {
+        print('teacher_salary_payments table might not exist: $e');
+        // Try to execute the SQL to create the table
+        // This is just a notification - we'll handle the actual table creation separately
+        print('Please run the SQL in query.txt to create the teacher_salary_payments table');
+        return []; // Return empty list if table doesn't exist
+      }
+      
+      try {
+        // Get all current month salaries
+        final response = await _supabase
+            .from('teacher_salary_payments')
+            .select()
+            .eq('month', currentMonth)
+            .eq('year', currentYear);
+        
+        // Join with teacher data to get teacher names
+        final salaries = <TeacherSalary>[];
+        for (final json in response as List) {
+          final teacherId = json['teacher_id'] as String;
+          
+          // Get teacher details
+          final teacherResponse = await _supabase
+              .from('teachers')
+              .select()
+              .eq('id', teacherId)
+              .single();
+          
+          final teacher = Teacher.fromJson(teacherResponse);
+          
+          // Create TeacherSalary object with teacher name
+          final salaryJson = Map<String, dynamic>.from(json);
+          salaryJson['teacher_name'] = teacher.name;
+          
+          salaries.add(TeacherSalary.fromJson(salaryJson));
+        }
+        
+        return salaries;
+      } catch (e) {
+        print('Error getting data from teacher_salary_payments: $e');
+        return [];
+      }
+    } catch (e) {
+      print('Error getting current month teacher salaries: $e');
+      return [];
+    }
+  }
+  
+  Future<List<TeacherSalary>> getTeacherSalaryHistory(String teacherId) async {
+    try {
+      // Get all salary records for this teacher
+      final response = await _supabase
+          .from('teacher_salary_payments')
+          .select()
+          .eq('teacher_id', teacherId)
+          .order('payment_date', ascending: false);
+      
+      // Get teacher details
+      final teacherResponse = await _supabase
+          .from('teachers')
+          .select()
+          .eq('id', teacherId)
+          .single();
+      
+      final teacher = Teacher.fromJson(teacherResponse);
+      
+      // Create TeacherSalary objects with teacher name
+      final salaries = <TeacherSalary>[];
+      for (final json in response as List) {
+        final salaryJson = Map<String, dynamic>.from(json);
+        salaryJson['teacher_name'] = teacher.name;
+        
+        salaries.add(TeacherSalary.fromJson(salaryJson));
+      }
+      
+      return salaries;
+    } catch (e) {
+      print('Error getting teacher salary history: $e');
+      return []; // Return empty list instead of rethrowing
+    }
+  }
+  
+  Future<List<TeacherSalary>> getTeacherSalariesByMonthYear(int month, int year) async {
+    try {
+      // Get all salary records for the specified month and year
+      final response = await _supabase
+          .from('teacher_salary_payments')
+          .select()
+          .eq('month', month)
+          .eq('year', year)
+          .order('payment_date', ascending: false);
+      
+      // Join with teacher data to get teacher names
+      final salaries = <TeacherSalary>[];
+      for (final json in response as List) {
+        final teacherId = json['teacher_id'] as String;
+        
+        // Get teacher details
+        final teacherResponse = await _supabase
+            .from('teachers')
+            .select()
+            .eq('id', teacherId)
+            .single();
+        
+        final teacher = Teacher.fromJson(teacherResponse);
+        
+        // Create TeacherSalary object with teacher name
+        final salaryJson = Map<String, dynamic>.from(json);
+        salaryJson['teacher_name'] = teacher.name;
+        
+        salaries.add(TeacherSalary.fromJson(salaryJson));
+      }
+      
+      return salaries;
+    } catch (e) {
+      print('Error getting teacher salaries by month/year: $e');
+      return []; // Return empty list instead of rethrowing
+    }
+  }
+  
+  Future<TeacherSalary> addTeacherSalary(TeacherSalary salary) async {
+    try {
+      // Prepare data for insertion
+      final data = Map<String, dynamic>.from(salary.toJson());
+      
+      // Remove the id field if it's empty to let the database generate a UUID
+      if (salary.id.isEmpty) {
+        data.remove('id');
+      }
+      
+      // Always use teacher_salary_payments table
+      final response = await _supabase
+          .from('teacher_salary_payments')
+          .insert(data)
+          .select()
+          .single();
+      
+      // Get teacher details
+      final teacherResponse = await _supabase
+          .from('teachers')
+          .select()
+          .eq('id', salary.teacherId)
+          .single();
+      
+      final teacher = Teacher.fromJson(teacherResponse);
+      
+      // Create TeacherSalary object with teacher name
+      final salaryJson = Map<String, dynamic>.from(response);
+      salaryJson['teacher_name'] = teacher.name;
+      
+      return TeacherSalary.fromJson(salaryJson);
+    } catch (e) {
+      print('Error adding teacher salary: $e');
+      
+      // Create a dummy object to return in case of error
+      final now = DateTime.now();
+      return TeacherSalary(
+        id: 'error', // Use a simple error string instead of timestamp
+        teacherId: salary.teacherId,
+        teacherName: salary.teacherName,
+        amount: salary.amount,
+        paymentDate: salary.paymentDate,
+        month: salary.month,
+        year: salary.year,
+        status: salary.status,
+        paymentMethod: salary.paymentMethod,
+        notes: 'Error: ${e.toString()}',
+        createdAt: now,
+        updatedAt: now,
+      );
+    }
+  }
+  
+  Future<TeacherSalary> updateTeacherSalary(TeacherSalary salary) async {
+    try {
+      // Make sure we have a valid UUID for the ID
+      if (salary.id.isEmpty || salary.id == 'error') {
+        throw Exception('Cannot update a salary record with an invalid ID');
+      }
+      
+      // Prepare data for update
+      final data = Map<String, dynamic>.from(salary.toJson());
+      
+      // Always use teacher_salary_payments table
+      final response = await _supabase
+          .from('teacher_salary_payments')
+          .update(data)
+          .eq('id', salary.id)
+          .select()
+          .single();
+      
+      // Get teacher details
+      final teacherResponse = await _supabase
+          .from('teachers')
+          .select()
+          .eq('id', salary.teacherId)
+          .single();
+      
+      final teacher = Teacher.fromJson(teacherResponse);
+      
+      // Create TeacherSalary object with teacher name
+      final salaryJson = Map<String, dynamic>.from(response);
+      salaryJson['teacher_name'] = teacher.name;
+      
+      return TeacherSalary.fromJson(salaryJson);
+    } catch (e) {
+      print('Error updating teacher salary: $e');
+      
+      // Create a dummy object to return in case of error
+      final now = DateTime.now();
+      return TeacherSalary(
+        id: salary.id,
+        teacherId: salary.teacherId,
+        teacherName: salary.teacherName,
+        amount: salary.amount,
+        paymentDate: salary.paymentDate,
+        month: salary.month,
+        year: salary.year,
+        status: salary.status,
+        paymentMethod: salary.paymentMethod,
+        notes: 'Error: ${e.toString()}',
+        createdAt: now,
+        updatedAt: now,
+      );
+    }
+  }
+  
+  Future<void> updateTeacherSalaryStatus(String salaryId, String status) async {
+    try {
+      // Always use teacher_salary_payments table
+      await _supabase
+          .from('teacher_salary_payments')
+          .update({
+            'status': status,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', salaryId);
+    } catch (e) {
+      print('Error updating teacher salary status: $e');
+      // Don't rethrow to avoid crashing the app
+    }
+  }
+  
+  Future<void> generateCurrentMonthTeacherSalaries() async {
+    try {
+      final now = DateTime.now();
+      final currentMonth = now.month;
+      final currentYear = now.year;
+      
+      // Get all teachers
+      final teachersResponse = await _supabase
+          .from('teachers')
+          .select();
+      
+      final teachers = (teachersResponse as List).map((json) => Teacher.fromJson(json)).toList();
+      
+      try {
+        // Get all current month salaries
+        final salariesResponse = await _supabase
+            .from('teacher_salary_payments')
+            .select()
+            .eq('month', currentMonth)
+            .eq('year', currentYear);
+        
+        final existingSalaries = salariesResponse as List;
+        
+        // Create a set of teacher IDs who already have a salary entry
+        final teacherIdsWithSalaries = existingSalaries.map((json) => json['teacher_id'] as String).toSet();
+        
+        // Create salary entries for teachers who don't have one
+        for (final teacher in teachers) {
+          if (!teacherIdsWithSalaries.contains(teacher.id)) {
+            // Calculate payment date (last day of current month)
+            final lastDayOfMonth = DateTime(currentYear, currentMonth + 1, 0);
+            
+            // Create a new salary entry
+            final newSalary = TeacherSalary(
+              id: '', // Let the database generate a UUID
+              teacherId: teacher.id,
+              teacherName: teacher.name,
+              amount: teacher.salary,
+              paymentDate: lastDayOfMonth,
+              month: currentMonth,
+              year: currentYear,
+              status: 'Pending',
+              paymentMethod: 'Cash', // Default payment method
+              notes: '', // Empty notes by default
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now(),
+            );
+            
+            await addTeacherSalary(newSalary);
+          }
+        }
+      } catch (e) {
+        print('Error with teacher_salary_payments table: $e');
+        print('Please run the SQL in query.txt to create the teacher_salary_payments table');
+      }
+    } catch (e) {
+      print('Error generating current month teacher salaries: $e');
+      // Don't rethrow to avoid crashing the app
+    }
+  }
+  
+  Future<void> updateOverdueTeacherSalaries() async {
+    try {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      
+      try {
+        // Get all pending salaries with payment dates before today
+        final response = await _supabase
+            .from('teacher_salary_payments')
+            .select()
+            .eq('status', 'Pending');
+        
+        // Update status to Overdue for salaries with payment dates before today
+        for (final json in response as List) {
+          final paymentDate = DateTime.parse(json['payment_date'] as String);
+          final paymentDateOnly = DateTime(paymentDate.year, paymentDate.month, paymentDate.day);
+          
+          if (paymentDateOnly.isBefore(today)) {
+            await _supabase
+                .from('teacher_salary_payments')
+                .update({
+                  'status': 'Overdue',
+                  'updated_at': DateTime.now().toIso8601String(),
+                })
+                .eq('id', json['id']);
+          }
+        }
+      } catch (e) {
+        print('Error updating overdue salaries in teacher_salary_payments: $e');
+      }
+    } catch (e) {
+      print('Error updating overdue teacher salaries: $e');
     }
   }
 }

@@ -26,7 +26,8 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
   final TextEditingController _salaryController = TextEditingController();
   final TextEditingController _paymentDateController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-  final TextEditingController _paymentMethodController = TextEditingController();
+  final TextEditingController _paymentMethodController =
+      TextEditingController();
   DateTime? _selectedPaymentDate;
   String _selectedStatus = 'Pending';
   String _selectedPaymentMethod = 'Bank Transfer';
@@ -34,35 +35,30 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
   List<Teacher> _teachers = [];
   List<TeacherSalary> _salaries = [];
   List<TeacherSalary> _filteredSalaries = [];
-  
+
   // Get unique payment methods
   List<String> get _paymentMethods {
-    final Set<String> methodsSet = {'Bank Transfer', 'Cash', 'Check'};
-    
-    // Add methods from existing salaries
-    for (var salary in _salaries) {
-      if (salary.paymentMethod != null && salary.paymentMethod!.isNotEmpty) {
-        methodsSet.add(salary.paymentMethod!);
-      }
-    }
-    
-    final methods = methodsSet.toList();
+    final methods = _salaries
+        .where((s) => s.paymentMethod != null && s.paymentMethod!.isNotEmpty)
+        .map((s) => s.paymentMethod!)
+        .toSet()
+        .toList();
     methods.sort();
-    return methods;
+    return ['Bank Transfer', 'Cash', 'Check', ...methods];
   }
-  
+
   // Get total unpaid amount
   double get _totalUnpaidAmount {
     return _salaries
         .where((s) => !s.isPaid)
         .fold(0.0, (sum, salary) => sum + salary.amount);
   }
-  
+
   // Get count of unpaid salaries
   int get _unpaidCount {
     return _salaries.where((s) => !s.isPaid).length;
   }
-  
+
   // Get count of overdue salaries
   int get _overdueCount {
     return _salaries.where((s) => s.isOverdue).length;
@@ -73,22 +69,22 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
     super.initState();
     _loadData();
   }
-  
+
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       // Load teachers
       _teachers = await _databaseService.getTeachers();
-      
+
       // Generate current month salaries if needed
       await _databaseService.generateCurrentMonthTeacherSalaries();
-      
+
       // Update overdue salaries
       await _databaseService.updateOverdueTeacherSalaries();
-      
+
       // Load current month salaries
       _salaries = await _databaseService.getCurrentMonthTeacherSalaries();
       _filterSalaries();
@@ -128,8 +124,8 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
             .where((salary) =>
                 salary.teacherName.toLowerCase().contains(query) ||
                 salary.status.toLowerCase().contains(query) ||
-                (salary.paymentMethod != null && 
-                 salary.paymentMethod!.toLowerCase().contains(query)))
+                (salary.paymentMethod != null &&
+                    salary.paymentMethod!.toLowerCase().contains(query)))
             .toList();
       }
 
@@ -202,11 +198,11 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
 
   Future<void> _togglePaymentStatus(TeacherSalary salary) async {
     final newStatus = salary.isPaid ? 'Pending' : 'Paid';
-    
+
     try {
       await _databaseService.updateTeacherSalaryStatus(salary.id, newStatus);
       await _loadData(); // Reload data
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -223,7 +219,7 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
       );
     }
   }
-  
+
   void _viewSalaryHistory(String teacherId, String teacherName) {
     Navigator.push(
       context,
@@ -235,7 +231,7 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
       ),
     ).then((_) => _loadData()); // Reload data when returning
   }
-  
+
   Future<void> _showAddEditSalaryDialog([TeacherSalary? salary]) async {
     // Clear previous form data
     _nameController.clear();
@@ -245,7 +241,7 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
     _selectedPaymentDate = null;
     _selectedStatus = 'Pending';
     _selectedPaymentMethod = 'Bank Transfer';
-    
+
     // If editing, populate form with salary data
     Teacher? selectedTeacher;
     if (salary != null) {
@@ -253,16 +249,18 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
       _nameController.text = salary.teacherName;
       _salaryController.text = salary.amount.toString();
       _selectedPaymentDate = salary.paymentDate;
-      _paymentDateController.text = DateFormat('dd/MM/yyyy').format(salary.paymentDate);
+      _paymentDateController.text =
+          DateFormat('dd/MM/yyyy').format(salary.paymentDate);
       _selectedStatus = salary.status;
       _selectedPaymentMethod = salary.paymentMethod ?? 'Bank Transfer';
       _notesController.text = salary.notes ?? '';
     }
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(salary == null ? 'Add Salary Record' : 'Edit Salary Record'),
+        title:
+            Text(salary == null ? 'Add Salary Record' : 'Edit Salary Record'),
         content: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -287,10 +285,11 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                       });
                     }
                   },
-                  validator: (value) => value == null ? 'Please select a teacher' : null,
+                  validator: (value) =>
+                      value == null ? 'Please select a teacher' : null,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Salary amount
                 TextFormField(
                   controller: _salaryController,
@@ -307,7 +306,7 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Payment date
                 TextFormField(
                   controller: _paymentDateController,
@@ -322,7 +321,7 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Status dropdown
                 DropdownButtonFormField<String>(
                   decoration: const InputDecoration(labelText: 'Status'),
@@ -342,10 +341,11 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Payment method dropdown
                 DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(labelText: 'Payment Method'),
+                  decoration:
+                      const InputDecoration(labelText: 'Payment Method'),
                   value: _selectedPaymentMethod,
                   items: _paymentMethods.map((method) {
                     return DropdownMenuItem<String>(
@@ -362,7 +362,7 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Notes
                 TextFormField(
                   controller: _notesController,
@@ -386,7 +386,7 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                   (t) => t.name == _nameController.text,
                   orElse: () => _teachers.first,
                 );
-                
+
                 try {
                   if (salary == null) {
                     // Create new salary record
@@ -400,11 +400,13 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                       year: now.year,
                       status: _selectedStatus,
                       paymentMethod: _selectedPaymentMethod,
-                      notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+                      notes: _notesController.text.isNotEmpty
+                          ? _notesController.text
+                          : null,
                       createdAt: now,
                       updatedAt: now,
                     );
-                    
+
                     await _databaseService.addTeacherSalary(newSalary);
                   } else {
                     // Update existing salary record
@@ -415,13 +417,15 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                       paymentDate: _selectedPaymentDate ?? now,
                       status: _selectedStatus,
                       paymentMethod: _selectedPaymentMethod,
-                      notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+                      notes: _notesController.text.isNotEmpty
+                          ? _notesController.text
+                          : null,
                       updatedAt: now,
                     );
-                    
+
                     await _databaseService.updateTeacherSalary(updatedSalary);
                   }
-                  
+
                   // Close dialog and reload data
                   if (mounted) {
                     Navigator.pop(context);
@@ -508,10 +512,10 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
       ),
     );
   }
-  
+
   Widget _buildSummaryCards() {
     final currencyFormat = NumberFormat.currency(symbol: '\$');
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
@@ -608,7 +612,7 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
         ),
       );
     }
-    
+
     if (_filteredSalaries.isEmpty) {
       return const Center(
         child: Text(
@@ -627,27 +631,31 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
           columns: [
             DataColumn(
               label: const Text('Name'),
-              onSort: (columnIndex, ascending) => _sortSalaries('name', ascending),
+              onSort: (columnIndex, ascending) =>
+                  _sortSalaries('name', ascending),
             ),
             DataColumn(
               label: const Text('Amount'),
               numeric: true,
-              onSort: (columnIndex, ascending) => _sortSalaries('amount', ascending),
+              onSort: (columnIndex, ascending) =>
+                  _sortSalaries('amount', ascending),
             ),
             DataColumn(
               label: const Text('Payment Date'),
-              onSort: (columnIndex, ascending) => _sortSalaries('paymentDate', ascending),
+              onSort: (columnIndex, ascending) =>
+                  _sortSalaries('paymentDate', ascending),
             ),
             DataColumn(
               label: const Text('Status'),
-              onSort: (columnIndex, ascending) => _sortSalaries('status', ascending),
+              onSort: (columnIndex, ascending) =>
+                  _sortSalaries('status', ascending),
             ),
             const DataColumn(label: Text('Actions')),
           ],
           rows: _filteredSalaries.map((salary) {
             final dateFormat = DateFormat('dd/MM/yyyy');
             final currencyFormat = NumberFormat.currency(symbol: '\$');
-            
+
             return DataRow(
               cells: [
                 DataCell(Text(salary.teacherName)),
@@ -665,7 +673,8 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                 ),
                 DataCell(
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: salary.isPaid
                           ? Colors.green.shade100
@@ -693,11 +702,14 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                     children: [
                       IconButton(
                         icon: Icon(
-                          salary.isPaid ? Icons.unpublished : Icons.check_circle,
+                          salary.isPaid
+                              ? Icons.unpublished
+                              : Icons.check_circle,
                           color: salary.isPaid ? Colors.orange : Colors.green,
                         ),
                         onPressed: () => _togglePaymentStatus(salary),
-                        tooltip: salary.isPaid ? 'Mark as Unpaid' : 'Mark as Paid',
+                        tooltip:
+                            salary.isPaid ? 'Mark as Unpaid' : 'Mark as Paid',
                       ),
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.blue),
@@ -706,7 +718,8 @@ class _TeacherSalaryScreenState extends State<TeacherSalaryScreen> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.history, color: Colors.purple),
-                        onPressed: () => _viewSalaryHistory(salary.teacherId, salary.teacherName),
+                        onPressed: () => _viewSalaryHistory(
+                            salary.teacherId, salary.teacherName),
                         tooltip: 'View Salary History',
                       ),
                     ],

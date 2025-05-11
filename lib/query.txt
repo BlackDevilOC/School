@@ -128,3 +128,67 @@ CREATE INDEX idx_teacher_salary_history_month_year ON teacher_salary_history(mon
 -- Indexes for current month salary table
 CREATE INDEX idx_current_month_salary_teacher_id ON current_month_salary(teacher_id);
 CREATE INDEX idx_current_month_salary_month_year ON current_month_salary(month, year);
+
+-- Create teacher_salary_payments table that matches our code structure
+CREATE TABLE IF NOT EXISTS teacher_salary_payments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    teacher_id UUID NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_date DATE NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('Paid', 'Pending', 'Overdue')),
+    month INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    payment_method TEXT,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for teacher_salary_payments table
+CREATE INDEX IF NOT EXISTS idx_teacher_salary_payments_teacher_id ON teacher_salary_payments(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_teacher_salary_payments_month_year ON teacher_salary_payments(month, year);
+
+-- Alter table to add missing columns (if table exists but columns don't)
+DO $$ 
+BEGIN
+    -- Add status column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'teacher_salary_payments' AND column_name = 'status') THEN
+        ALTER TABLE teacher_salary_payments ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'Pending' 
+        CHECK (status IN ('Paid', 'Pending', 'Overdue'));
+    END IF;
+    
+    -- Add payment_method column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'teacher_salary_payments' AND column_name = 'payment_method') THEN
+        ALTER TABLE teacher_salary_payments ADD COLUMN payment_method TEXT DEFAULT 'Cash';
+    END IF;
+    
+    -- Add notes column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'teacher_salary_payments' AND column_name = 'notes') THEN
+        ALTER TABLE teacher_salary_payments ADD COLUMN notes TEXT DEFAULT '';
+    END IF;
+    
+    -- Add month column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'teacher_salary_payments' AND column_name = 'month') THEN
+        ALTER TABLE teacher_salary_payments ADD COLUMN month INTEGER NOT NULL DEFAULT EXTRACT(MONTH FROM CURRENT_DATE);
+    END IF;
+    
+    -- Add year column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'teacher_salary_payments' AND column_name = 'year') THEN
+        ALTER TABLE teacher_salary_payments ADD COLUMN year INTEGER NOT NULL DEFAULT EXTRACT(YEAR FROM CURRENT_DATE);
+    END IF;
+    
+    -- Add updated_at column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'teacher_salary_payments' AND column_name = 'updated_at') THEN
+        ALTER TABLE teacher_salary_payments ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+    END IF;
+    
+    -- Make payment_method nullable if it's not already
+    ALTER TABLE teacher_salary_payments ALTER COLUMN payment_method DROP NOT NULL;
+    ALTER TABLE teacher_salary_payments ALTER COLUMN notes DROP NOT NULL;
+END $$;

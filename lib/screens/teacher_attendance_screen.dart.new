@@ -19,19 +19,14 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = true;
   bool _isLoadingAttendance = false;
+  bool _hasChanges = false;
 
   // Define attendance status options and their colors
   final Map<String, Color> _statusColors = {
     'Present': Colors.green,
     'Absent': Colors.red,
-    'Excused': Colors.blue, // Using Excused instead of Leave to match database constraint
-  };
-  
-  // Map for display names (what user sees) vs actual values (what's stored in DB)
-  final Map<String, String> _statusDisplayNames = {
-    'Present': 'Present',
-    'Absent': 'Absent',
-    'Excused': 'Leave', // Display "Leave" but store as "Excused"
+    'Excused': Colors.blue, // For leave
+    'Late': Colors.orange,
   };
 
   @override
@@ -95,7 +90,21 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
     }
   }
 
-
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2023),
+      lastDate: DateTime(2025),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+      // Reload attendance for the new date
+      await _loadAttendanceForDate();
+    }
+  }
 
   Future<void> _updateAttendanceStatus(Teacher teacher, String newStatus) async {
     try {
@@ -135,6 +144,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
 
       // Reload attendance records
       await _loadAttendanceForDate();
+      setState(() => _hasChanges = true);
 
       // Show a subtle indicator that the change was saved
       ScaffoldMessenger.of(context).clearSnackBars();
@@ -172,7 +182,6 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
   }
   
   Widget _getStatusIndicator(String status) {
-    final displayName = _getStatusDisplayName(status);
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 12,
@@ -186,7 +195,7 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
         ),
       ),
       child: Text(
-        displayName[0], // First letter of display name
+        status[0], // First letter of status
         style: TextStyle(
           color: _getStatusColor(status),
           fontWeight: FontWeight.bold,
@@ -207,11 +216,11 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
               leading: CircleAvatar(
                 backgroundColor: _getStatusColor(status),
                 child: Text(
-                  _getStatusDisplayName(status)[0],
+                  status[0],
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
-              title: Text(_getStatusDisplayName(status)),
+              title: Text(status),
               onTap: () {
                 Navigator.pop(context);
                 _updateAttendanceStatus(teacher, status);
@@ -228,26 +237,18 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
       ),
     );
   }
-  
-  Widget _buildStatusChip(String status, String label) {
-    return Chip(
-      label: Text(label),
-      backgroundColor: _getStatusColor(status).withOpacity(0.2),
-      side: BorderSide(color: _getStatusColor(status)),
-      labelStyle: TextStyle(color: _getStatusColor(status), fontWeight: FontWeight.bold),
-    );
-  }
-  
-  // Get the display name for a status
-  String _getStatusDisplayName(String status) {
-    return _statusDisplayNames[status] ?? status;
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Teacher Attendance'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_today),
+            onPressed: () => _selectDate(context),
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -257,14 +258,22 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   color: Theme.of(context).colorScheme.surfaceVariant,
-                  child: Center(
-                    child: Text(
-                      'Date: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Date: ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.calendar_month),
+                        label: const Text('Change Date'),
+                        onPressed: () => _selectDate(context),
+                      ),
+                    ],
                   ),
                 ),
                 // Status legend
@@ -272,13 +281,17 @@ class _TeacherAttendanceScreenState extends State<TeacherAttendanceScreen> {
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildStatusChip('Present', 'P'),
-                      const SizedBox(width: 8),
-                      _buildStatusChip('Absent', 'A'),
-                      const SizedBox(width: 8),
-                      _buildStatusChip('Excused', 'L'), // Use 'Excused' as key but display as Leave
-                    ],
+                    children: _statusColors.entries.map((entry) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Chip(
+                          label: Text(entry.key[0]),
+                          backgroundColor: entry.value.withOpacity(0.2),
+                          side: BorderSide(color: entry.value),
+                          labelStyle: TextStyle(color: entry.value),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
                 // Teacher list

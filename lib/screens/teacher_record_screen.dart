@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../routes.dart';
-import 'monthly_report_screen.dart';
+import 'teacher_monthly_report_screen.dart';
 import 'teacher_salary_screen.dart';
 
 class TeacherRecordScreen extends StatelessWidget {
@@ -189,11 +189,6 @@ class TeacherRecordScreen extends StatelessWidget {
   }
 
   void _showMonthlyReports(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const MonthlyReportScreen(isTeacher: true),
-      ),
-    );
+    Navigator.pushNamed(context, Routes.teacherMonthlyReport);
   }
 }
