@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/student.dart';
 import '../services/database_service.dart';
+import '../services/sync_service.dart';
 import 'package:uuid/uuid.dart';
 
 class ManageStudentsScreen extends StatefulWidget {
@@ -12,9 +13,11 @@ class ManageStudentsScreen extends StatefulWidget {
 
 class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   final DatabaseService _databaseService = DatabaseService();
+  final SyncService _syncService = SyncService(DatabaseService());
   final Uuid _uuid = const Uuid();
   List<Student> _students = [];
   bool _isLoading = true;
+  final _scrollController = ScrollController();
 
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
@@ -38,16 +41,30 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   Future<void> _loadStudents() async {
     setState(() => _isLoading = true);
     try {
+      // Load cached data first
+      final cachedStudents = await _syncService.getStudentsWithCache();
+      if (cachedStudents.isNotEmpty) {
+        setState(() {
+          _students = cachedStudents;
+          _isLoading = false;
+        });
+      }
+
+      // Load fresh data
       final students = await _databaseService.getStudents();
-      setState(() {
-        _students = students;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _students = students;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading students: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading students: $e')),
+        );
+      }
     }
   }
 
@@ -148,17 +165,24 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
             ),
             child: Container(
               padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      _isEditing ? 'Edit Student' : 'Add New Student',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: 1,
+                      itemBuilder: (context, index) {
+                        return Text(
+                          _isEditing ? 'Edit Student' : 'Add New Student',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -278,6 +302,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Manage Students'),
         actions: [
@@ -287,37 +312,55 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _students.isEmpty
-              ? const Center(child: Text('No students found'))
-              : ListView.builder(
-                  itemCount: _students.length,
-                  itemBuilder: (context, index) {
-                    final student = _students[index];
-                    return ListTile(
-                      title: Text(student.name),
-                      subtitle: Text(
-                        student.isClassStudent
-                            ? 'Class: ${student.classGrade}'
-                            : 'Course: ${student.courseName}',
+      body: RefreshIndicator(
+        onRefresh: _loadStudents,
+        child: _isLoading && _students.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                controller: _scrollController,
+                child: _students.isEmpty
+                    ? const Center(child: Text('No students found'))
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _students.length,
+                        itemBuilder: (context, index) {
+                          final student = _students[index];
+                          return ListTile(
+                            title: Text(student.name),
+                            subtitle: Text(
+                              student.isClassStudent
+                                  ? 'Class: ${student.classGrade}'
+                                  : 'Course: ${student.courseName}',
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 32,
+                                  height: 32,
+                                  child: IconButton(
+                                    padding: EdgeInsets.zero,
+                                    icon: const Icon(Icons.edit, size: 20),
+                                    onPressed: () => _showForm(student: student),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 32,
+                                  height: 32,
+                                  child: IconButton(
+                                    padding: EdgeInsets.zero,
+                                    icon: const Icon(Icons.delete, size: 20),
+                                    onPressed: () => _deleteStudent(student.id),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () => _showForm(student: student),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () => _deleteStudent(student.id),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+              ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showForm(),
         child: const Icon(Icons.add),

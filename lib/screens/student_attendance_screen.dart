@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/student.dart';
 import '../models/attendance.dart';
 import '../services/database_service.dart';
+import '../services/sync_service.dart';
 import 'package:uuid/uuid.dart';
 
 class StudentAttendanceScreen extends StatefulWidget {
@@ -14,12 +15,14 @@ class StudentAttendanceScreen extends StatefulWidget {
 
 class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   final DatabaseService _databaseService = DatabaseService();
+  final SyncService _syncService = SyncService(DatabaseService());
   final Uuid _uuid = const Uuid();
   List<Student> _students = [];
   List<Student> _filteredStudents = [];
   List<Attendance> _attendanceRecords = [];
   bool _isLoading = true;
   bool _isLoadingAttendance = false;
+  final ScrollController _scrollController = ScrollController();
 
   DateTime _selectedDate = DateTime.now();
   bool _isClassStudent = true;
@@ -73,6 +76,16 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
+      // Load cached data first
+      final cachedStudents = await _syncService.getStudentsWithCache();
+      if (cachedStudents.isNotEmpty) {
+        setState(() {
+          _students = cachedStudents;
+          _isLoading = false;
+        });
+        _filterStudents();
+      }
+      
       // Load students from Supabase
       await _loadStudents();
 
@@ -85,9 +98,11 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading data: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading data: $e')),
+        );
+      }
     }
   }
 
@@ -259,15 +274,16 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   Widget _getStatusIndicator(String status) {
     final color = _statusColors[status] ?? Colors.grey;
     final displayName = _statusDisplayNames[status] ?? status;
+    
     return CircleAvatar(
-      radius: 15,
+      radius: 14,
       backgroundColor: color,
       child: Text(
-        displayName[0], // First letter of display name (P, A, L)
-        style: TextStyle(
+        displayName[0],
+        style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
-          fontSize: 14,
+          fontSize: 12,
         ),
       ),
     );
@@ -276,18 +292,26 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Student Attendance'),
+        backgroundColor: Colors.green,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadData,
+            iconSize: 22,
           ),
         ],
       ),
-      body: _isLoading
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        child: _isLoading && _students.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : Column(
+          : SingleChildScrollView(
+              controller: _scrollController,
+              child: Column(
               children: [
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -407,35 +431,52 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
                     }).toList(),
                   ),
                 ),
-                _isLoadingAttendance
-                    ? const Center(child: CircularProgressIndicator())
-                    : Expanded(
-                        child: _filteredStudents.isEmpty
-                            ? const Center(child: Text('No students found'))
-                            : ListView.builder(
-                                itemCount: _filteredStudents.length,
-                                itemBuilder: (context, index) {
-                                  final student = _filteredStudents[index];
-                                  final status =
-                                      _getAttendanceStatus(student.id);
-                                  return ListTile(
-                                    title: Text(student.name),
+                Container(
+                  height: MediaQuery.of(context).size.height - 250,
+                  child: _isLoadingAttendance
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filteredStudents.isEmpty
+                          ? const Center(child: Text('No students found'))
+                          : ListView.builder(
+                              itemCount: _filteredStudents.length,
+                              itemBuilder: (context, index) {
+                                final student = _filteredStudents[index];
+                                final status =
+                                    _getAttendanceStatus(student.id);
+                                 
+                                return Card(
+                                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  elevation: 1,
+                                  child: ListTile(
+                                    dense: true,
+                                    title: Text(
+                                      student.name,
+                                      style: TextStyle(fontWeight: FontWeight.w600),
+                                    ),
                                     subtitle: Text(
                                       student.isClassStudent
                                           ? 'Class: ${student.classGrade}'
                                           : 'Course: ${student.courseName}',
+                                      style: TextStyle(fontSize: 12),
                                     ),
-                                    trailing: InkWell(
-                                      onTap: () =>
-                                          _showStatusSelectionDialog(student),
-                                      child: _getStatusIndicator(status),
+                                    trailing: SizedBox(
+                                      width: 40,
+                                      height: 40,
+                                      child: InkWell(
+                                        borderRadius: BorderRadius.circular(20),
+                                        onTap: () => _showStatusSelectionDialog(student),
+                                        child: _getStatusIndicator(status),
+                                      ),
                                     ),
-                                  );
-                                },
-                              ),
-                      ),
+                                  ),
+                                );
+                              },
+                            ),
+                ),
               ],
             ),
+          ),
+        ),
     );
   }
 }

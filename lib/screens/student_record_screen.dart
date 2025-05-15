@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../routes.dart';
 import 'monthly_report_screen.dart';
 import '../services/database_service.dart';
+import '../services/sync_service.dart';
 import '../models/student.dart';
 import '../models/attendance.dart';
-import 'package:intl/intl.dart';
 
 class StudentRecordScreen extends StatefulWidget {
   const StudentRecordScreen({super.key});
@@ -15,10 +15,12 @@ class StudentRecordScreen extends StatefulWidget {
 
 class _StudentRecordScreenState extends State<StudentRecordScreen> {
   final DatabaseService _databaseService = DatabaseService();
+  final SyncService _syncService = SyncService(DatabaseService());
   bool _isLoading = true;
   List<Student> _students = [];
   List<Attendance> _attendanceRecords = [];
   Map<String, Map<String, int>> _attendanceStats = {};
+  final ScrollController _scrollController = ScrollController();
   
   @override
   void initState() {
@@ -29,22 +31,32 @@ class _StudentRecordScreenState extends State<StudentRecordScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      // Load students
-      final students = await _databaseService.getStudents();
+      // Load cached data first
+      final cachedStudents = await _syncService.getStudentsWithCache();
+      final cachedStats = await _syncService.getAttendanceStatsWithCache(cachedStudents);
       
-      // Load today's attendance
+      if (cachedStudents.isNotEmpty) {
+        setState(() {
+          _students = cachedStudents;
+          _attendanceStats = cachedStats;
+          _isLoading = false;
+        });
+      }
+      
+      // Load fresh data
+      final students = await _databaseService.getStudents();
       final today = DateTime.now();
       final attendance = await _databaseService.getAttendanceForDate(today);
-      
-      // Calculate statistics
       final stats = await _calculateAttendanceStats(students);
       
-      setState(() {
-        _students = students;
-        _attendanceRecords = attendance;
-        _attendanceStats = stats;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _students = students;
+          _attendanceRecords = attendance;
+          _attendanceStats = stats;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
@@ -106,10 +118,8 @@ class _StudentRecordScreenState extends State<StudentRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine if we're on a mobile or web layout based on screen width
-    final isWebLayout = MediaQuery.of(context).size.width > 800;
-    
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: Text(
           'Student Record',
@@ -124,16 +134,20 @@ class _StudentRecordScreenState extends State<StudentRecordScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.green.withOpacity(0.1), Colors.white],
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        child: _isLoading && _students.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              controller: _scrollController,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.green.withOpacity(0.1), Colors.white],
+                  ),
                 ),
-              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -189,8 +203,9 @@ class _StudentRecordScreenState extends State<StudentRecordScreen> {
                       ),
                     ),
                     SizedBox(height: 24),
-                    Expanded(
-                      child: isWebLayout
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height - 300,
+                      child: MediaQuery.of(context).size.width > 800
                           ? _buildWebLayout(context)
                           : _buildMobileLayout(context),
                     ),
@@ -198,6 +213,8 @@ class _StudentRecordScreenState extends State<StudentRecordScreen> {
                 ),
               ),
             ),
+          ),
+        ),
     );
   }
 
@@ -629,30 +646,30 @@ class _StudentRecordScreenState extends State<StudentRecordScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         child: Container(
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
               ),
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             child: Stack(
               children: [
                 // Background design element
                 Positioned(
-                  right: -15,
-                  bottom: -15,
+                  right: -10,
+                  bottom: -10,
                   child: Container(
-                    width: 80,
-                    height: 80,
+                    width: 50,
+                    height: 50,
                     decoration: BoxDecoration(
                       color: iconColor.withOpacity(0.1),
                       shape: BoxShape.circle,
@@ -661,17 +678,17 @@ class _StudentRecordScreenState extends State<StudentRecordScreen> {
                 ),
                 // Content
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(icon, size: 36, color: iconColor),
-                      const SizedBox(height: 12),
+                      Icon(icon, size: 24, color: iconColor),
+                      const SizedBox(height: 6),
                       Text(
                         title,
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: iconColor,
                         ),
