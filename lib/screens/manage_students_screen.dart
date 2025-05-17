@@ -302,69 +302,217 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Manage Students'),
+        backgroundColor: Colors.green,
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadStudents,
+            tooltip: 'Refresh',
           ),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: _loadStudents,
         child: _isLoading && _students.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                controller: _scrollController,
-                child: _students.isEmpty
-                    ? const Center(child: Text('No students found'))
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _students.length,
-                        itemBuilder: (context, index) {
-                          final student = _students[index];
-                          return ListTile(
-                            title: Text(student.name),
-                            subtitle: Text(
-                              student.isClassStudent
-                                  ? 'Class: ${student.classGrade}'
-                                  : 'Course: ${student.courseName}',
+            ? const Center(child: CircularProgressIndicator(color: Colors.green))
+            : _students.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.person_off, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No students found',
+                          style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: () => _showForm(),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add Student'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Determine if we should use a grid or list based on screen width
+                        final isWideScreen = constraints.maxWidth > 600;
+                        
+                        if (isWideScreen) {
+                          // Grid layout for wider screens
+                          return GridView.builder(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 3.5,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 32,
-                                  height: 32,
-                                  child: IconButton(
-                                    padding: EdgeInsets.zero,
-                                    icon: const Icon(Icons.edit, size: 20),
-                                    onPressed: () => _showForm(student: student),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 32,
-                                  height: 32,
-                                  child: IconButton(
-                                    padding: EdgeInsets.zero,
-                                    icon: const Icon(Icons.delete, size: 20),
-                                    onPressed: () => _deleteStudent(student.id),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            itemCount: _students.length,
+                            itemBuilder: (context, index) {
+                              return _buildStudentCard(_students[index]);
+                            },
                           );
-                        },
-                      ),
-              ),
+                        } else {
+                          // List layout for narrower screens
+                          return ListView.builder(
+                            itemCount: _students.length,
+                            itemBuilder: (context, index) {
+                              return _buildStudentCard(_students[index]);
+                            },
+                          );
+                        }
+                      },
+                    ),
+                  ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showForm(),
+        backgroundColor: Colors.green,
         child: const Icon(Icons.add),
+        tooltip: 'Add Student',
       ),
+    );
+  }
+  
+  Widget _buildStudentCard(Student student) {
+    return Card(
+      elevation: 1,
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      child: InkWell(
+        onTap: () => _showForm(student: student),
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Avatar/Icon
+              CircleAvatar(
+                backgroundColor: Colors.green.shade100,
+                radius: 16,
+                child: Text(
+                  student.name.isNotEmpty ? student.name[0].toUpperCase() : '?',
+                  style: TextStyle(fontSize: 14, color: Colors.green.shade800),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Student details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      student.name,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Text(
+                          student.isClassStudent
+                              ? 'Class: ${student.classGrade}'
+                              : 'Course: ${student.courseName ?? "N/A"}',
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(Icons.phone, size: 12, color: Colors.grey[600]),
+                        const SizedBox(width: 2),
+                        Text(
+                          student.phoneNumber,
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                    if (student.feeAmount > 0)
+                      Row(
+                        children: [
+                          Icon(Icons.attach_money, size: 12, color: Colors.grey[600]),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${student.feeAmount.toStringAsFixed(2)}',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              // Action buttons
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 18, color: Colors.blue),
+                    onPressed: () => _showForm(student: student),
+                    tooltip: 'Edit',
+                    constraints: const BoxConstraints(maxHeight: 30, maxWidth: 30),
+                    padding: EdgeInsets.zero,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                    onPressed: () => _showDeleteConfirmation(student),
+                    tooltip: 'Delete',
+                    constraints: const BoxConstraints(maxHeight: 30, maxWidth: 30),
+                    padding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Future<void> _showDeleteConfirmation(Student student) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Delete'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: [
+                Text('Are you sure you want to delete ${student.name}?'),
+                const SizedBox(height: 8),
+                const Text('This action cannot be undone.'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteStudent(student.id);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

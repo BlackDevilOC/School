@@ -1,0 +1,55 @@
+import 'package:flutter/material.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/student_record_screen.dart';
+import 'screens/teacher_record_screen.dart';
+import 'screens/student_attendance_screen.dart';
+import 'screens/teacher_attendance_screen.dart';
+import 'screens/manage_students_screen.dart';
+import 'screens/manage_teachers_screen.dart';
+import 'screens/fee_structure_screen.dart';
+import 'screens/fee_records_screen.dart';
+import 'screens/monthly_report_screen.dart';
+import 'screens/teacher_monthly_report_screen.dart';
+import 'screens/data_export_screen.dart';
+import 'screens/teacher_salary_screen.dart';
+// Note: teacher_salary_records_screen.dart is imported in teacher_salary_screen.dart
+// and used directly with parameters rather than through routes
+
+class Routes {
+  static const String login = '/login';
+  static const String home = '/home';
+  static const String studentRecord = '/student_record';
+  static const String teacherRecord = '/teacher_record';
+  static const String studentAttendance = '/student_attendance';
+  static const String teacherAttendance = '/teacher_attendance';
+  static const String manageStudents = '/manage_students';
+  static const String manageTeachers = '/manage_teachers';
+  static const String feeStructure = '/fee_structure';
+  static const String feeRecords = '/fee_records';
+  static const String monthlyReport = '/monthly_report';
+  static const String teacherMonthlyReport = '/teacher_monthly_report';
+  static const String dataExport = '/data_export';
+  static const String teacherSalary = '/teacher_salary';
+
+  static Map<String, WidgetBuilder> getRoutes() {
+    return {
+      login: (context) => LoginScreen(),
+      home: (context) => HomeScreen(),
+      studentRecord: (context) => StudentRecordScreen(),
+      teacherRecord: (context) => TeacherRecordScreen(),
+      studentAttendance: (context) => StudentAttendanceScreen(),
+      teacherAttendance: (context) => TeacherAttendanceScreen(),
+      manageStudents: (context) => ManageStudentsScreen(),
+      manageTeachers: (context) => ManageTeachersScreen(),
+      feeStructure: (context) => FeeStructureScreen(),
+      feeRecords: (context) => FeeRecordsScreen(),
+      monthlyReport: (context) => const MonthlyReportScreen(isTeacher: false),
+      teacherMonthlyReport: (context) => const TeacherMonthlyReportScreen(),
+      dataExport: (context) => const DataExportScreen(),
+      teacherSalary: (context) => const TeacherSalaryScreen(),
+      // TeacherSalaryRecordsScreen requires parameters (teacherId, teacherName)
+      // and should be navigated to directly using Navigator.push instead of named routes
+    };
+  }
+}

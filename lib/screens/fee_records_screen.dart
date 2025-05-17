@@ -828,51 +828,115 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
       }
     });
     
+    // Get screen width to make layout responsive
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 600;
+    
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       color: Colors.red.shade100,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.warning, color: Colors.red.shade800),
-              const SizedBox(width: 8),
-              Text(
-                'Unpaid Fees Warning',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.red.shade800,
+      child: isWideScreen
+          // Wide screen layout - horizontal arrangement
+          ? Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    children: [
+                      Icon(Icons.warning, color: Colors.red.shade800, size: 20),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Unpaid Fees Warning',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: Colors.red.shade800,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  'Total: \$${totalUnpaid.toStringAsFixed(2)}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'Students: ${_unpaidFeesByStudent.length}',
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Total unpaid amount: \$${totalUnpaid.toStringAsFixed(2)}',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          Text('Number of students with unpaid fees: ${_unpaidFeesByStudent.length}'),
-          if (studentsWithMultipleUnpaid > 0)
-            Text(
-              '$studentsWithMultipleUnpaid students have unpaid fees for multiple months',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+                ElevatedButton(
+                  onPressed: _showUnpaidFeesDetails,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade700,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  child: const Text('View Details', style: TextStyle(fontSize: 13)),
+                ),
+              ],
+            )
+          // Narrow screen layout - more compact vertical arrangement
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.warning, color: Colors.red.shade800, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Unpaid Fees Warning',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: Colors.red.shade800,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total: \$${totalUnpaid.toStringAsFixed(2)}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        Text(
+                          'Students: ${_unpaidFeesByStudent.length}',
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ],
+                    ),
+                    ElevatedButton(
+                      onPressed: _showUnpaidFeesDetails,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade700,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        minimumSize: const Size(80, 30),
+                      ),
+                      child: const Text('View Details', style: TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          const SizedBox(height: 8),
-          ElevatedButton(
-            onPressed: () {
-              // Show detailed unpaid fees dialog
-              _showUnpaidFeesDetails();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade700,
-            ),
-            child: const Text('View Details'),
-          ),
-        ],
-      ),
     );
   }
 
